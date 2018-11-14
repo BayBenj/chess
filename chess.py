@@ -1,33 +1,73 @@
 from abc import ABC, abstractmethod
+from collections import namedtuple
+
+Coord = namedtuple('Coord', ['i', 'j'])
 
 def init_board():
+    player = 1
     board = [[0 for i in range(8)] for j in range(8)]
-    board[1] = [1 for i in range(8)]
-    board[0][0] = 4
-    board[0][7] = 4
-    board[0][1] = 2
-    board[0][6] = 2
-    board[0][2] = 3
-    board[0][5] = 3
+    board[1] = [Pon() for i in range(8)]
+    board[0][0] = Rook(Coord(0,0), 1, )
+    board[0][7] = Rook()
+    board[0][1] = Knight()
+    board[0][6] = Knight()
+    board[0][2] = Bishop()
+    board[0][5] = Bishop()
     board[0][3] = 6
     board[0][4] = 5
-    board[6] = [-1 for i in range(8)]
-    board[7][0] = -4
-    board[7][7] = -4
-    board[7][1] = -2
-    board[7][6] = -2
-    board[7][2] = -3
-    board[7][5] = -3
+    player = -1
+    board[6] = [Pon() for i in range(8)]
+    board[7][0] = Rook()
+    board[7][7] = Rook()
+    board[7][1] = Knight()
+    board[7][6] = Knight()
+    board[7][2] = Bishop()
+    board[7][5] = Bishop()
     board[7][3] = -5
     board[7][4] = -6
     return board
+
+def sync_piece(board, piece, coord, player):
+    board[coord.i][coord.j] = piece(coord, player)
+
+def init_player(player):
+    if player == 1:
+        back_row = 0
+        front_row = 1
+    else:
+        back_row = 7
+        front_row = 6
+    for i in range(8):
+        sync_piece(board, Pon, Coord(fonrt_row,i), player)
+    sync_piece(board, Rook, Coord(back_row,0), player)
+    sync_piece(board, Rook, Coord(back_row,7), player)
+    sync_piece(board, Knight, Coord(back_row,1), player)
+    sync_piece(board, Knight, Coord(back_row,6), player)
+    sync_piece(board, Bishop, Coord(back_row,2), player)
+    sync_piece(board, Bihsop, Coord(back_row,5), player)
+    sync_piece(board, Queen, Coord(back_row,3), player)
+    sync_piece(board, King, Coord(back_row,4), player)
 
 
 class Board():
     def __init__(self):
         self.board = init_board()
 
-    
+    def is_clear(self, coord):
+        return self.board[coord.i][coord,j] == 0
+
+    def is_friend(self, coord, player):
+        if self.is_clear(coord):
+            return False
+        return self.board[coord.i][coord,j].owner == player
+
+
+    def is_enemy(self, coord, player):
+        if self.is_clear(coord):
+            return False
+        return self.board[coord.i][coord,j].owner == player * -1
+
+
     def print(self):
         for i in range(8):
             for j in range(8):
@@ -75,13 +115,14 @@ if __name__ == "__main__":
     board.print()
 
 
-"""
+
 class Piece():
-    def __init__(self, x, y, player):
-        self.x = x
-        self.y = y
+    def __init__(self, coord, player, board):
+        self.coord = coord
         self.owner = player
-    
+        self.board = board
+   
+    @abstractmethod
     def __str__(self):
         return ""
 
@@ -100,10 +141,10 @@ class Piece():
 
 class Pon(Piece):
     def __str__():
-        return "P"
+        return "1"
 
-        def get_possible_moves(self):
-                return check_board({()})
+    def get_possible_moves(self):
+        return check_board({()})
     
 
 class Bishop(Piece):
@@ -113,7 +154,24 @@ class Knight(Piece):
     pass
 
 class Rook(Piece):
-    pass
+    def get_possible_moves(self):
+        moves = []
+        pos = Coord(self.coord.i, self.coord.j)
+        dirs = [Coord(1,0), Coord(0,1), Coord(-1,0), Coord(0,-1)]
+        for dir_ in dirs:
+            good = True
+            while good:
+                candidate_pos = Coord(pos.i+dir_.i, pos.j+dir_.j)
+                if self.board.is_clear(candidate_pos):
+                    moves.append(candidate_pos)
+                    pos = candidate_pos
+                elif self.board.is_enemy(candidate_pos, self.owner):
+                    moves.append(candidate_pos)
+                    good = False
+                elif self.board.is_friend(candidate_pos, self.owner):
+                    good = False
+        return moves
+
 
 class Queen(Piece):
     pass
