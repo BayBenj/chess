@@ -68,7 +68,27 @@ class Pon(Piece):
         return "1"
 
     def get_possible_moves(self):
-        return {}
+        if self.owner == 1:
+            front_row = 1
+        else:
+            front_row = 6
+        result = []
+        diags = []
+        diag1 = Coord(self.coord.i+1*self.owner,self.coord.j+1)
+        diag2 = Coord(self.coord.i+1*self.owner,self.coord.j-1)
+        if self.board.is_on_board(diag1) and self.board.is_enemy(diag1, self.owner):
+            diags.append(diag1)
+        if self.board.is_on_board(diag2) and self.board.is_enemy(diag2, self.owner):
+            diags.append(diag2)
+        result += diags
+        up1 = Coord(self.coord.i+1*self.owner,self.coord.j)
+        if self.board.is_on_board(up1) and self.board.is_clear(up1):
+            result.append(up1)
+            if self.coord.i == front_row:
+                up2 = Coord(self.coord.i+2*self.owner,self.coord.j)
+                if self.board.is_on_board(up2) and self.board.is_clear(up2):
+                    result.append(up2)
+        return set(result)
     
 
 class Bishop(Piece):
@@ -200,6 +220,7 @@ class Board():
 
     def movement(self, i, j, k, l):
         self.board[k][l] = self.board[i][j]
+        self.board[k][l].coord = Coord(k,l)
         self.board[i][j] = 0
 
 
@@ -231,11 +252,25 @@ negative = black
 6 = king
 """
 
+def human_turn(board, player):
+    print("Player move: ", end="")
+    i = int(input())
+    j = int(input())
+    k = int(input())
+    l = int(input())
+    if Coord(k,l) in board.board[i][j].get_possible_moves():
+        board.movement(i,j,k,l)
+        board.print()
+    else:
+        print("Move not allowed!")
+
 if __name__ == "__main__":
     board = Board()
     board.print()
-    print("possible moves for knight: {}".format(board.board[0][1].get_possible_moves()))
-    print("possible moves for player 1: {}".format(board.get_all_possible_moves(1)))
-
+    #print("possible moves for pon: {}".format(board.board[6][0].get_possible_moves()))
+    #print("possible moves for player 1: {}".format(board.get_all_possible_moves(1)))
+    good = True
+    while good:
+        human_turn(board, -1)
 
 
