@@ -7,7 +7,7 @@ Coord = namedtuple('Coord', ['i', 'j'])
 DIAG_DIRS = {Coord(1,1), Coord(-1,-1), Coord(-1,1), Coord(1,-1)}
 ORTH_DIRS = {Coord(0,1), Coord(1,0), Coord(0,-1), Coord(-1,0)}
 ALL_DIRS = DIAG_DIRS | ORTH_DIRS
-
+KNIGHT_DIRS = {Coord(-1,2), Coord(1,2), Coord(1,-2), Coord(-1,-2), Coord(-2,1), Coord(2,1), Coord(2,-1), Coord(-2,-1)}
 
 
 class Piece():
@@ -39,7 +39,7 @@ class Piece():
 
 
     def straight_moves(self, dirs, line):
-        moves = {}
+        moves = []
         for dir_ in dirs:
             good = True
             pos = Coord(self.coord.i, self.coord.j)
@@ -60,7 +60,7 @@ class Piece():
                     break
                 if not line:
                     break
-        return moves
+        return set(moves)
 
 
 class Pon(Piece):
@@ -85,7 +85,8 @@ class Knight(Piece):
         return "2"
     
     
-    pass
+    def get_possible_moves(self):
+        return self.straight_moves(KNIGHT_DIRS, False)
 
 
 class Rook(Piece):
@@ -216,7 +217,7 @@ class Board():
     def get_all_possible_moves(self, player):
         pieces = self.get_all_pieces(player)
         result = [piece.get_possible_moves() for coord, piece in pieces.items()]
-
+        return result
 
 """
 SIMPLE BOARD KEY
@@ -233,7 +234,7 @@ negative = black
 if __name__ == "__main__":
     board = Board()
     board.print()
-    print("possible moves for queen: {}".format(board.board[0][3].get_possible_moves()))
+    print("possible moves for knight: {}".format(board.board[0][1].get_possible_moves()))
     print("possible moves for player 1: {}".format(board.get_all_possible_moves(1)))
 
 
