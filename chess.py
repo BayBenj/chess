@@ -67,6 +67,7 @@ class Pon(Piece):
     def __str__(self):
         return "1"
 
+
     def get_possible_moves(self):
         if self.owner == 1:
             front_row = 1
@@ -237,7 +238,7 @@ class Board():
 
     def get_all_possible_moves(self, player):
         pieces = self.get_all_pieces(player)
-        result = [piece.get_possible_moves() for coord, piece in pieces.items()]
+        result = {coord:piece.get_possible_moves() for coord, piece in pieces.items()}
         return result
 
 """
@@ -258,19 +259,30 @@ def human_turn(board, player):
     j = int(input())
     k = int(input())
     l = int(input())
-    if Coord(k,l) in board.board[i][j].get_possible_moves():
-        board.movement(i,j,k,l)
-        board.print()
+    if board.board[i][j].owner == player:
+        if Coord(k,l) in board.board[i][j].get_possible_moves():
+            board.movement(i,j,k,l)
+            board.print()
+        else:
+            print("Move not allowed!")
     else:
-        print("Move not allowed!")
+        print("You do not own that piece!")
+
+
+def random_turn(board, player):
+    moves = board.get_all_possible_moves(player)
+    #n = 
+    #r = random(n)
+    #board.movement(r.i,r.j,,)
+
 
 if __name__ == "__main__":
     board = Board()
     board.print()
     #print("possible moves for pon: {}".format(board.board[6][0].get_possible_moves()))
-    #print("possible moves for player 1: {}".format(board.get_all_possible_moves(1)))
+    print("possible moves for player 1: {}".format(board.get_all_possible_moves(1)))
     good = True
     while good:
         human_turn(board, -1)
-
+        #random_turn(board, 1)
 
