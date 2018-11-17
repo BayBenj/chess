@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import namedtuple
+import random
 
 Coord = namedtuple('Coord', ['i', 'j'])
 
@@ -48,15 +49,12 @@ class Piece():
                 if not self.board.is_on_board(candidate_pos):
                     break
                 if self.board.is_clear(candidate_pos):
-                    print("!")
                     moves.append(candidate_pos)
                     pos = candidate_pos
                 elif self.board.is_enemy(candidate_pos, self.owner):
-                    print("enemy")
                     moves.append(candidate_pos)
                     break
                 elif self.board.is_friend(candidate_pos, self.owner):
-                    print("friend")
                     break
                 if not line:
                     break
@@ -217,6 +215,7 @@ class Board():
                 print(self.board[i][j], end="")
 
             print("")
+        print("")
 
 
     def movement(self, i, j, k, l):
@@ -270,10 +269,25 @@ def human_turn(board, player):
 
 
 def random_turn(board, player):
-    moves = board.get_all_possible_moves(player)
-    #n = 
-    #r = random(n)
-    #board.movement(r.i,r.j,,)
+    possibles = board.get_all_possible_moves(player)
+    set2 = dict(possibles)
+    total = 0
+    for key, val in possibles.items():
+        set2[key] = len(val)
+        total += len(val)
+    r = random.randint(0,total-1)
+    print("r={}".format(r))
+    total = 0
+    for key, val in possibles.items():
+        for coord in val:
+            total += 1
+            if total < r:
+                spot = key
+                result = coord
+                break
+    board.movement(spot.i,spot.j,coord.i,coord.j)
+    print("Computer moves:")
+    board.print()
 
 
 if __name__ == "__main__":
@@ -283,6 +297,6 @@ if __name__ == "__main__":
     print("possible moves for player 1: {}".format(board.get_all_possible_moves(1)))
     good = True
     while good:
+        random_turn(board, 1)
         human_turn(board, -1)
-        #random_turn(board, 1)
 
