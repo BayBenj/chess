@@ -1,147 +1,38 @@
 from abc import ABC, abstractmethod
-from collections import namedtuple
 import random
+import pprint
 
-Coord = namedtuple('Coord', ['i', 'j'])
+from pieces import *
 
+pp = pprint.PrettyPrinter(indent=4)
 
-DIAG_DIRS = {Coord(1,1), Coord(-1,-1), Coord(-1,1), Coord(1,-1)}
-ORTH_DIRS = {Coord(0,1), Coord(1,0), Coord(0,-1), Coord(-1,0)}
-ALL_DIRS = DIAG_DIRS | ORTH_DIRS
-KNIGHT_DIRS = {Coord(-1,2), Coord(1,2), Coord(1,-2), Coord(-1,-2), Coord(-2,1), Coord(2,1), Coord(2,-1), Coord(-2,-1)}
-
-
-class Piece():
-    def __init__(self, coord, owner, board):
-        self.coord = coord
-        self.owner = owner
-        self.board = board
-
-
-#    @abstractmethod
-    def __str__(self):
-        return ""
-
-
-#    @abstractmethod
-    def get_possible_moves(self):
-        return []
-
-
-#    @abstractmethod
-#    @staticmethod
-    def get_value(self):
-        return -1
-
-
-#    @abstractmethod
-    def get_positional_value(self):
-        return -1
-
-
-    def straight_moves(self, dirs, line):
-        moves = []
-        for dir_ in dirs:
-            good = True
-            pos = Coord(self.coord.i, self.coord.j)
-            while good:
-                candidate_pos = Coord(pos.i+dir_.i, pos.j+dir_.j)
-                if not self.board.is_on_board(candidate_pos):
-                    break
-                if self.board.is_clear(candidate_pos):
-                    moves.append(candidate_pos)
-                    pos = candidate_pos
-                elif self.board.is_enemy(candidate_pos, self.owner):
-                    moves.append(candidate_pos)
-                    break
-                elif self.board.is_friend(candidate_pos, self.owner):
-                    break
-                if not line:
-                    break
-        return set(moves)
-
-
-class Pon(Piece):
-    def __str__(self):
-        return "p"
-
-
-    def get_possible_moves(self):
-        if self.owner == 1:
-            front_row = 1
+class Player(object):
+    def __init__(self, cpu, n):
+        if n == 1:
+            self.front_i = 6
+            self.back_i = 7
+            self.pon_i = 0
         else:
-            front_row = 6
-        result = []
-        diags = []
-        diag1 = Coord(self.coord.i+1*self.owner,self.coord.j+1)
-        diag2 = Coord(self.coord.i+1*self.owner,self.coord.j-1)
-        if self.board.is_on_board(diag1) and self.board.is_enemy(diag1, self.owner):
-            diags.append(diag1)
-        if self.board.is_on_board(diag2) and self.board.is_enemy(diag2, self.owner):
-            diags.append(diag2)
-        result += diags
-        up1 = Coord(self.coord.i+1*self.owner,self.coord.j)
-        if self.board.is_on_board(up1) and self.board.is_clear(up1):
-            result.append(up1)
-            if self.coord.i == front_row:
-                up2 = Coord(self.coord.i+2*self.owner,self.coord.j)
-                if self.board.is_on_board(up2) and self.board.is_clear(up2):
-                    result.append(up2)
-        return set(result)
-    
+            self.front_i = 1
+            self.back_i = 0
+            self.pon_i = 7
+        self.n = n
+        self.cpu = cpu
 
-class Bishop(Piece):
+    def __eq__(self, other):
+        #TODO fix
+        if not isinstance(other, Player):
+            return False
+        return self.n == other.n
+
+    
     def __str__(self):
-        return "b"
-    
-    
-    def get_possible_moves(self):
-        return self.straight_moves(DIAG_DIRS, True)
+        return str(self.n)
 
 
-class Knight(Piece):
-    def __str__(self):
-        return "k"
-    
-    
-    def get_possible_moves(self):
-        return self.straight_moves(KNIGHT_DIRS, False)
-
-
-class Rook(Piece):
-    def __str__(self):
-        return "r"
-    
-    
-    def get_possible_moves(self):
-        return self.straight_moves(ORTH_DIRS, True)
-
-
-class Queen(Piece):
-    def __str__(self):
-        return "q"
-
-    
-    def is_on_board(self):
-        super.is_on_board()
-
-    
-    def get_possible_moves(self):
-        return self.straight_moves(ALL_DIRS, True)
-
-
-class King(Piece):
-    def __str__(self):
-        return "k"
-    
-    
-    def get_possible_moves(self):
-        return self.straight_moves(ALL_DIRS, False)
-
-
-class Board():
+class Board(object):
     def __init__(self):
-        self.init_board()
+        self.board = [[None for i in range(8)] for j in range(8)]
 
 
     def __str__(self):
@@ -157,7 +48,7 @@ class Board():
 
 
     def is_clear(self, coord):
-        return self.board[coord.i][coord.j] == 0
+        return self.board[coord.i][coord.j] is None
 
 
     def is_friend(self, coord, player):
@@ -169,49 +60,20 @@ class Board():
     def is_enemy(self, coord, player):
         if self.is_clear(coord):
             return False
-        return (self.board[coord.i][coord.j].owner) == (player * -1)
-
-
-    def init_board(self):
-        self.board = [[0 for i in range(8)] for j in range(8)]
-        self.init_player(1)
-        self.init_player(-1)
+        return (self.board[coord.i][coord.j].owner.n) == (player.n * -1)
 
 
     def sync_piece(self, piece, coord, player):
         self.board[coord.i][coord.j] = piece(coord, player, self)
 
 
-    def init_player(self, player):
-        if player == 1:
-            back_row = 0
-            front_row = 1
-            queen = 3
-            king = 4
-        else:
-            back_row = 7
-            front_row = 6
-            queen = 3
-            king = 4
-        for i in range(8):
-            self.sync_piece(Pon, Coord(front_row,i), player)
-        self.sync_piece(Rook, Coord(back_row,0), player)
-        self.sync_piece(Rook, Coord(back_row,7), player)
-        self.sync_piece(Knight, Coord(back_row,1), player)
-        self.sync_piece(Knight, Coord(back_row,6), player)
-        self.sync_piece(Bishop, Coord(back_row,2), player)
-        self.sync_piece(Bishop, Coord(back_row,5), player)
-        self.sync_piece(Queen, Coord(back_row,queen), player)
-        self.sync_piece(King, Coord(back_row,king), player)
-
-    
     def print(self):
         for i in range(8):
             for j in range(8):
                 x = self.board[i][j]
-                if isinstance(x, Piece) and x.owner == 1:
+                if isinstance(x, Piece) and x.owner.n == 1:
                     print(" {}".format(str(x).capitalize()), end="")
-                elif x == 0:
+                elif x is None:
                     print(" .", end="")
                 else:
                     print(" {}".format(str(x)), end="")
@@ -221,25 +83,32 @@ class Board():
 
 
     def movement(self, i, j, k, l):
-        self.board[k][l] = self.board[i][j]
-        self.board[k][l].coord = Coord(k,l)
-        self.board[i][j] = 0
+        # Check for queen rule
+        x = self.board[i][j]
+        if x.i == x.owner.pon_i and isinstance(x, Pon):
+            self.sync_piece(Queen, Coord(k,l), x.owner)
+            self.board[i][j] = None
+        else:
+            self.board[i][j].move_to(Coord(k,l))
+            #self.board[k][l] = x
+            #self.board[k][l].coord = Coord(k,l)
+            #self.board[i][j] = None
 
 
-    def get_all_pieces(self, player):
-        result = {}
+    def get_all_pieces_for_player(self, player):
+        result = set()
         for i in range(8):
             for j in range(8):
                 if not isinstance(self.board[i][j], Piece):
                     continue
                 if self.board[i][j].owner == player:
-                    result[Coord(i,j)] = self.board[i][j]
+                    result.add(self.board[i][j])
         return result
 
 
-    def get_all_possible_moves(self, player):
-        pieces = self.get_all_pieces(player)
-        result = {coord:piece.get_possible_moves() for coord, piece in pieces.items()}
+    def get_all_possible_moves_for_player(self, player):
+        pieces = self.get_all_pieces_for_player(player)
+        result = {piece:piece.get_possible_moves() for piece in pieces}
         return result
 
 """
@@ -254,48 +123,86 @@ negative = black
 6 = king
 """
 
-def human_turn(board, player):
-    print("Player move: ", end="")
-    i = int(input())
-    j = int(input())
-    k = int(input())
-    l = int(input())
-    if board.board[i][j].owner == player:
-        if Coord(k,l) in board.board[i][j].get_possible_moves():
-            board.movement(i,j,k,l)
-            board.print()
+class Game(object):
+    def __init__(self):
+        self.white = Player(True, 1)
+        self.black = Player(True, -1)
+        self.board = Board()
+        self.init_players()
+        self.board.print()
+
+
+    def init_players(self):
+        self.init_player(self.white)
+        self.init_player(self.black)
+
+
+    def init_player(self, player):
+        for i in range(8):
+            self.board.sync_piece(Pon, Coord(player.front_i,i), player)
+        self.board.sync_piece(Rook, Coord(player.back_i,0), player)
+        self.board.sync_piece(Rook, Coord(player.back_i,7), player)
+        self.board.sync_piece(Knight, Coord(player.back_i,1), player)
+        self.board.sync_piece(Knight, Coord(player.back_i,6), player)
+        self.board.sync_piece(Bishop, Coord(player.back_i,2), player)
+        self.board.sync_piece(Bishop, Coord(player.back_i,5), player)
+        self.board.sync_piece(Queen, Coord(player.back_i,3), player)
+        self.board.sync_piece(King, Coord(player.back_i,4), player)
+
+
+    def play(self):
+        game = True
+        while game:
+            self.random_turn(Player(True, 1))
+            self.random_turn(Player(True, -1))
+
+
+    def human_turn(self, player):
+        print("Player move: ", end="")
+        i = input()
+        if i == "p":
+            print("Turn passed")
+            return
+        i = str(i)
+        j = int(input())
+        k = int(input())
+        l = int(input())
+        if self.board.board[i][j].owner == player:
+            if Coord(k,l) in board.board[i][j].get_possible_moves():
+                self.board.movement(i,j,k,l)
+                self.board.print()
+            else:
+                print("Move not allowed!")
         else:
-            print("Move not allowed!")
-    else:
-        print("You do not own that piece!")
+            print("You do not own that piece!")
 
 
-def random_turn(board, player):
-    possibles = board.get_all_possible_moves(player)
-    total = 0
-    for key, val in possibles.items():
-        total += len(val)
-    r = random.randint(0,total-1)
-    print("r={}".format(r))
-    total = 0
-    for key, val in possibles.items():
-        for coord in val:
-            total += 1
-            if total > r:
-                spot = key
-                result = coord
+    def random_turn(self, player):
+        possibles = self.board.get_all_possible_moves_for_player(player)
+        total = 0
+        for key, val in possibles.items():
+            total += len(val)
+        print("possible moves for player {}: {}".format(player, total))
+        pp.pprint(possibles)
+        r = random.randint(0,total-1)
+        total = 0 
+        end = False
+        for key, val in possibles.items():
+            for coord in val:
+                total += 1
+                if total > r:
+                    spot = key
+                    result = coord
+                    end = True
+                    break
+            if end:
                 break
-    board.movement(spot.i,spot.j,coord.i,coord.j)
-    print("Computer moves:")
-    board.print()
+        self.board.movement(spot.i,spot.j,coord.i,coord.j)
+        print("Computer moves:")
+        self.board.print()
 
 
 if __name__ == "__main__":
-    board = Board()
-    board.print()
-    #print("possible moves for pon: {}".format(board.board[6][0].get_possible_moves()))
-    good = True
-    while good:
-        random_turn(board, 1)
-        human_turn(board, -1)
+    game = Game()
+    game.play()
 
