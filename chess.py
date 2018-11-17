@@ -63,7 +63,7 @@ class Piece():
 
 class Pon(Piece):
     def __str__(self):
-        return "1"
+        return "p"
 
 
     def get_possible_moves(self):
@@ -92,7 +92,7 @@ class Pon(Piece):
 
 class Bishop(Piece):
     def __str__(self):
-        return "3"
+        return "b"
     
     
     def get_possible_moves(self):
@@ -101,7 +101,7 @@ class Bishop(Piece):
 
 class Knight(Piece):
     def __str__(self):
-        return "2"
+        return "k"
     
     
     def get_possible_moves(self):
@@ -110,7 +110,7 @@ class Knight(Piece):
 
 class Rook(Piece):
     def __str__(self):
-        return "4"
+        return "r"
     
     
     def get_possible_moves(self):
@@ -119,7 +119,7 @@ class Rook(Piece):
 
 class Queen(Piece):
     def __str__(self):
-        return "5"
+        return "q"
 
     
     def is_on_board(self):
@@ -132,7 +132,7 @@ class Queen(Piece):
 
 class King(Piece):
     def __str__(self):
-        return "6"
+        return "k"
     
     
     def get_possible_moves(self):
@@ -208,11 +208,13 @@ class Board():
     def print(self):
         for i in range(8):
             for j in range(8):
-                n = self.board[i][j]
-                #if n >= 0:
-                #    print(" {}".format(self.board[i][j]), end="")
-                #else:
-                print(self.board[i][j], end="")
+                x = self.board[i][j]
+                if isinstance(x, Piece) and x.owner == 1:
+                    print(" {}".format(str(x).capitalize()), end="")
+                elif x == 0:
+                    print(" .", end="")
+                else:
+                    print(" {}".format(str(x)), end="")
 
             print("")
         print("")
@@ -270,10 +272,8 @@ def human_turn(board, player):
 
 def random_turn(board, player):
     possibles = board.get_all_possible_moves(player)
-    set2 = dict(possibles)
     total = 0
     for key, val in possibles.items():
-        set2[key] = len(val)
         total += len(val)
     r = random.randint(0,total-1)
     print("r={}".format(r))
@@ -281,7 +281,7 @@ def random_turn(board, player):
     for key, val in possibles.items():
         for coord in val:
             total += 1
-            if total < r:
+            if total > r:
                 spot = key
                 result = coord
                 break
@@ -294,7 +294,6 @@ if __name__ == "__main__":
     board = Board()
     board.print()
     #print("possible moves for pon: {}".format(board.board[6][0].get_possible_moves()))
-    print("possible moves for player 1: {}".format(board.get_all_possible_moves(1)))
     good = True
     while good:
         random_turn(board, 1)
