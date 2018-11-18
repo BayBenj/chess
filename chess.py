@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import random
+import sys
 import pprint
 
 from pieces import *
@@ -18,6 +19,9 @@ class Player(object):
             self.pon_i = 7
         self.n = n
         self.cpu = cpu
+        self.in_check = False
+        self.in_checkmate = False
+
 
     def __eq__(self, other):
         #TODO fix
@@ -85,7 +89,8 @@ class Board(object):
     def movement(self, i, j, k, l):
         # Check for queen rule
         x = self.board[i][j]
-        if x.i == x.owner.pon_i and isinstance(x, Pon):
+        if k == x.owner.pon_i and isinstance(x, Pon):
+            print("PON TO QUEEN!")
             self.sync_piece(Queen, Coord(k,l), x.owner)
             self.board[i][j] = None
         else:
@@ -108,22 +113,18 @@ class Board(object):
 
     def get_all_possible_moves_for_player(self, player):
         pieces = self.get_all_pieces_for_player(player)
-        result = {piece:piece.get_possible_moves() for piece in pieces}
-        return result
+        all_possibles = {piece:piece.get_possible_moves() for piece in pieces}
+        if player.in_check:
+            for piece, moves in all_possibles.items():
+                pass
 
-"""
-SIMPLE BOARD KEY
-positive = white
-negative = black
-1 = pon
-2 = knight
-3 = bishop
-4 = rook
-5 = queen
-6 = king
-"""
+        return all_possibles
+
 
 class Game(object):
+    
+    STALEMATE = False
+
     def __init__(self):
         self.white = Player(True, 1)
         self.black = Player(True, -1)
@@ -150,11 +151,28 @@ class Game(object):
         self.board.sync_piece(King, Coord(player.back_i,4), player)
 
 
+    def check_state(self, player, opponent):
+        possibles = self.board.get_all_possible_moves_for_player(opponent)
+        for piece, coords in possibles.items():
+            for coord in val:
+                if isinstance(self.board[val.i,val.j], King):
+                    player.in_check = True
+                    break
+        else:
+            player.in_check = False
+        
+
+
     def play(self):
         game = True
-        while game:
-            self.random_turn(Player(True, 1))
-            self.random_turn(Player(True, -1))
+        white = Player(True, 1)
+        black = Player(True, -1)
+        while white.in_checkmate == False and black.in_checkmate == False:
+            #self.check_state(white, black)
+            self.random_turn(white)
+            #self.check_state(black, white)
+            self.random_turn(black)
+        print("CHECKMATE!")
 
 
     def human_turn(self, player):
@@ -182,8 +200,12 @@ class Game(object):
         total = 0
         for key, val in possibles.items():
             total += len(val)
-        print("possible moves for player {}: {}".format(player, total))
-        pp.pprint(possibles)
+        #print("possible moves for player {}: {}".format(player, total))
+        #pp.pprint(possibles)
+        if total == 0:
+            STALEMATE = True
+            print("Stalemate!")
+            sys.exit(0)
         r = random.randint(0,total-1)
         total = 0 
         end = False
@@ -204,5 +226,5 @@ class Game(object):
 
 if __name__ == "__main__":
     game = Game()
-    game.play()
+    sys.exit(game.play())
 
