@@ -24,7 +24,6 @@ class Player(object):
 
 
     def __eq__(self, other):
-        #TODO fix
         if not isinstance(other, Player):
             return False
         return self.n == other.n
@@ -34,9 +33,20 @@ class Player(object):
         return str(self.n)
 
 
+Movement = namedtuple('Movement', ['i', 'j', 'k', 'l'])
+
+
 class Board(object):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.board = [[None for i in range(8)] for j in range(8)]
+        if len(args) == 2:
+            #self.board = board #try this
+            for i,x in enumerate(args[0].board):
+                for j,y in enumerate(x):
+                    self.board[i][j] = y
+            self.movement(args[1])
+
+
 
 
     def __str__(self):
@@ -86,18 +96,14 @@ class Board(object):
         print("")
 
 
-    def movement(self, i, j, k, l):
+    def movement(self, m):
         # Check for queen rule
-        x = self.board[i][j]
-        if k == x.owner.pon_i and isinstance(x, Pon):
-            print("PON TO QUEEN!")
-            self.sync_piece(Queen, Coord(k,l), x.owner)
-            self.board[i][j] = None
+        x = self.board[m.i][m.j]
+        if m.k == x.owner.pon_i and isinstance(x, Pon):
+            self.sync_piece(Queen, Coord(m.k,m.l), x.owner)
+            self.board[m.i][m.j] = None
         else:
-            self.board[i][j].move_to(Coord(k,l))
-            #self.board[k][l] = x
-            #self.board[k][l].coord = Coord(k,l)
-            #self.board[i][j] = None
+            self.board[m.i][m.j].move_to(Coord(m.k,m.l))
 
 
     def get_all_pieces_for_player(self, player):
@@ -109,16 +115,6 @@ class Board(object):
                 if self.board[i][j].owner == player:
                     result.add(self.board[i][j])
         return result
-
-
-    def get_all_possible_moves_for_player(self, player):
-        pieces = self.get_all_pieces_for_player(player)
-        all_possibles = {piece:piece.get_possible_moves() for piece in pieces}
-        if player.in_check:
-            for piece, moves in all_possibles.items():
-                pass
-
-        return all_possibles
 
 
 class Game(object):
@@ -151,27 +147,45 @@ class Game(object):
         self.board.sync_piece(King, Coord(player.back_i,4), player)
 
 
-    def check_state(self, player, opponent):
-        possibles = self.board.get_all_possible_moves_for_player(opponent)
+    def get_all_possible_moves_for_player(self, player, opponent):
+        """
+            Get all possible moves for a player, excluding moves into check.
+        """
+        pieces = self.board.get_all_pieces_for_player(player)
+        all_possibles = {piece:piece.get_possible_moves() for piece in pieces}
+        result = dict(all_possibles)
+        #if player.in_check:
+        for piece, moves in all_possibles.items():
+            for move in moves:
+                possible_movement = Movement(piece.i,piece.j,move.i,move.j)
+                possible_board = Board(self.board, possible_movement)
+                if not self.update_check_status(player, opponent):
+                    result[piece] = result[piece].add(possible_movement)
+        return result
+
+
+    def update_check_status(self, player, opponent):
+        possibles = self.get_all_possible_moves_for_player(opponent, player)
         for piece, coords in possibles.items():
-            for coord in val:
-                if isinstance(self.board[val.i,val.j], King):
+            for coord in coords:
+                if isinstance(self.board.board[coord.i][coord.j], King):
                     player.in_check = True
+                    print("Player {} in check!".format(player.n))
                     break
         else:
             player.in_check = False
+        return player.in_check
         
-
 
     def play(self):
         game = True
         white = Player(True, 1)
         black = Player(True, -1)
         while white.in_checkmate == False and black.in_checkmate == False:
-            #self.check_state(white, black)
-            self.random_turn(white)
-            #self.check_state(black, white)
-            self.random_turn(black)
+            self.update_check_status(white, black)
+            self.random_turn(white, black)
+            self.update_check_status(black, white)
+            self.random_turn(black, white)
         print("CHECKMATE!")
 
 
@@ -187,7 +201,7 @@ class Game(object):
         l = int(input())
         if self.board.board[i][j].owner == player:
             if Coord(k,l) in board.board[i][j].get_possible_moves():
-                self.board.movement(i,j,k,l)
+                self.board.movement(Movement(i,j,k,l))
                 self.board.print()
             else:
                 print("Move not allowed!")
@@ -195,16 +209,20 @@ class Game(object):
             print("You do not own that piece!")
 
 
-    def random_turn(self, player):
-        possibles = self.board.get_all_possible_moves_for_player(player)
+    def random_turn(self, player, opponent):
+        possibles = self.get_all_possible_moves_for_player(player, opponent)
         total = 0
         for key, val in possibles.items():
             total += len(val)
         #print("possible moves for player {}: {}".format(player, total))
         #pp.pprint(possibles)
-        if total == 0:
+        if total == 0 and not player.in_check:
             STALEMATE = True
             print("Stalemate!")
+            sys.exit(0)
+        elif total == 0 and player.in_check:
+            player.in_checkmate = True
+            print("Player {} is in CHECKMATE!".format(player.n))
             sys.exit(0)
         r = random.randint(0,total-1)
         total = 0 
@@ -219,8 +237,8 @@ class Game(object):
                     break
             if end:
                 break
-        self.board.movement(spot.i,spot.j,coord.i,coord.j)
-        print("Computer moves:")
+        self.board.movement(Movement(spot.i,spot.j,coord.i,coord.j))
+        print("Player {} (AI) moves:".format(player.n))
         self.board.print()
 
 
