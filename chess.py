@@ -47,8 +47,6 @@ class Board(object):
             self.movement(args[1])
 
 
-
-
     def __str__(self):
         self.print()
 
@@ -147,33 +145,35 @@ class Game(object):
         self.board.sync_piece(King, Coord(player.back_i,4), player)
 
 
-    def get_all_possible_moves_for_player(self, player, opponent):
+    def get_all_possible_moves_for_player(self, player, opponent, board):
         """
             Get all possible moves for a player, excluding moves into check.
         """
-        pieces = self.board.get_all_pieces_for_player(player)
+        pieces = board.get_all_pieces_for_player(player)
         all_possibles = {piece:piece.get_possible_moves() for piece in pieces}
         result = dict(all_possibles)
-        #if player.in_check:
         for piece, moves in all_possibles.items():
             for move in moves:
                 possible_movement = Movement(piece.i,piece.j,move.i,move.j)
-                possible_board = Board(self.board, possible_movement)
-                if not self.update_check_status(player, opponent):
+                possible_board = Board(board, possible_movement)
+                if not self.is_in_check(player, opponent, possible_board):
                     result[piece] = result[piece].add(possible_movement)
         return result
 
 
-    def update_check_status(self, player, opponent):
-        possibles = self.get_all_possible_moves_for_player(opponent, player)
+    def is_in_check(self, player, opponent, board):
+        possibles = self.get_all_possible_moves_for_player(opponent, player, board)
         for piece, coords in possibles.items():
             for coord in coords:
-                if isinstance(self.board.board[coord.i][coord.j], King):
-                    player.in_check = True
-                    print("Player {} in check!".format(player.n))
-                    break
-        else:
-            player.in_check = False
+                if isinstance(board.board[coord.i][coord.j], King) and board.board[coord.i][coord.j].owner is opponent:
+                    return True
+        return False
+        
+
+    def update_check_status(self, player, opponent):
+        player.in_check = self.is_in_check(player, opponent, self.board)
+        if player.in_check:
+            print("Player {} in check!".format(player.n))
         return player.in_check
         
 
@@ -210,7 +210,7 @@ class Game(object):
 
 
     def random_turn(self, player, opponent):
-        possibles = self.get_all_possible_moves_for_player(player, opponent)
+        possibles = self.get_all_possible_moves_for_player(player, opponent, self.board)
         total = 0
         for key, val in possibles.items():
             total += len(val)
