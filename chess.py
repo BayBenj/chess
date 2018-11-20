@@ -40,11 +40,21 @@ class Board(object):
     def __init__(self, *args, **kwargs):
         self.board = [[None for i in range(8)] for j in range(8)]
         if len(args) == 2:
-            #self.board = board #try this
-            for i,x in enumerate(args[0].board):
-                for j,y in enumerate(x):
-                    self.board[i][j] = y
+            #self.board = board #try this after everything is working
+            for i in range(8):
+                for j,x in enumerate(args[0].board[i]):
+                    if isinstance(x, Piece):
+                        cls = type(x)
+                        coord = Coord(x.i,x.j)
+                        owner = x.owner
+                        self.board[i][j] = cls(coord, owner, self)
+                    else:
+                        self.board[i][j] = x
+            print("\n\n~~~~~~~")
+            self.print("\t")
+            print(args[1])
             self.movement(args[1])
+            self.print("\t")
 
 
     def __str__(self):
@@ -79,8 +89,10 @@ class Board(object):
         self.board[coord.i][coord.j] = piece(coord, player, self)
 
 
-    def print(self):
+    def print(self, pre=None):
         for i in range(8):
+            if pre is not None:
+                print(pre, end="")
             for j in range(8):
                 x = self.board[i][j]
                 if isinstance(x, Piece) and x.owner.n == 1:
@@ -95,14 +107,14 @@ class Board(object):
 
 
     def movement(self, m):
-        # Check for queen rule
         x = self.board[m.i][m.j]
+        # Check for queen rule
         if m.k == x.owner.pon_i and isinstance(x, Pon):
-            self.sync_piece(Queen, Coord(m.k,m.l), x.owner)
-            self.board[m.i][m.j] = None
+            cls = Queen #TODO: fix?
         else:
-            self.board[m.i][m.j].move_to(Coord(m.k,m.l))
-
+            cls = type(x)
+        self.sync_piece(cls, Coord(m.k,m.l), x.owner)
+        self.board[m.i][m.j] = None
 
     def get_all_pieces_for_player(self, player):
         result = set()
@@ -151,13 +163,16 @@ class Game(object):
         """
         pieces = board.get_all_pieces_for_player(player)
         all_possibles = {piece:piece.get_possible_moves() for piece in pieces}
-        result = dict(all_possibles)
+        result = dict()
         for piece, moves in all_possibles.items():
             for move in moves:
                 possible_movement = Movement(piece.i,piece.j,move.i,move.j)
                 possible_board = Board(board, possible_movement)
                 if not self.is_in_check(player, opponent, possible_board):
-                    result[piece] = result[piece].add(possible_movement)
+                    if result[piece] is None:
+                        result[piece] = {possible_movement}
+                    else:
+                        result[piece] = result[piece].add(possible_movement)
         return result
 
 
