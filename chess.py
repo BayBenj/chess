@@ -50,11 +50,11 @@ class Board(object):
                         self.board[i][j] = cls(coord, owner, self)
                     else:
                         self.board[i][j] = x
-            print("\n\n~~~~~~~")
-            self.print("\t")
-            print(args[1])
+#            print("\n\n~~~~~~~")
+#            self.print("\t")
+#            print(args[1])
             self.movement(args[1])
-            self.print("\t")
+#            self.print("\t")
 
 
     def __str__(self):
@@ -85,10 +85,6 @@ class Board(object):
         return (self.board[coord.i][coord.j].owner.n) == (player.n * -1)
 
 
-    def sync_piece(self, piece, coord, player):
-        self.board[coord.i][coord.j] = piece(coord, player, self)
-
-
     def print(self, pre=None):
         for i in range(8):
             if pre is not None:
@@ -106,13 +102,20 @@ class Board(object):
         print("")
 
 
+    def sync_piece(self, piece, dest, player):
+        self.board[dest.i][dest.j] = piece(dest, player, self)
+
+
     def movement(self, m):
+        if m.i == m.k and m.j == m.l:
+            raise ValueError("Cannot move to current space!")
         x = self.board[m.i][m.j]
         # Check for queen rule
         if m.k == x.owner.pon_i and isinstance(x, Pon):
             cls = Queen #TODO: fix?
         else:
             cls = type(x)
+#        print("moving from {},{} to {},{}".format(m.i,m.j,m.k,m.l))
         self.sync_piece(cls, Coord(m.k,m.l), x.owner)
         self.board[m.i][m.j] = None
 
@@ -125,6 +128,25 @@ class Board(object):
                 if self.board[i][j].owner == player:
                     result.add(self.board[i][j])
         return result
+
+
+    def get_all_threats_for_player(self, player):
+        pieces = self.get_all_pieces_for_player(player)
+        result = set()
+        for piece in pieces:
+            threats = piece.get_threatened()
+            if threats is not None:
+                result |= threats
+        return result
+
+
+    def get_king(self, player):
+        for i in range(8):
+            for j in range(8):
+                if not isinstance(self.board[i][j], King):
+                    continue
+                if self.board[i][j].owner == player:
+                    return self.board[i][j]
 
 
 class Game(object):
@@ -169,19 +191,22 @@ class Game(object):
                 possible_movement = Movement(piece.i,piece.j,move.i,move.j)
                 possible_board = Board(board, possible_movement)
                 if not self.is_in_check(player, opponent, possible_board):
-                    if result[piece] is None:
+                    if result.get(piece) is None:
                         result[piece] = {possible_movement}
                     else:
-                        result[piece] = result[piece].add(possible_movement)
+                        tmp = set(result[piece])
+                        tmp.add(possible_movement)
+                        result[piece] = tmp
+#        print("possible moves:")
+#        pp.pprint(result)
         return result
 
 
     def is_in_check(self, player, opponent, board):
-        possibles = self.get_all_possible_moves_for_player(opponent, player, board)
-        for piece, coords in possibles.items():
-            for coord in coords:
-                if isinstance(board.board[coord.i][coord.j], King) and board.board[coord.i][coord.j].owner is opponent:
-                    return True
+        threatened_moves = board.get_all_threats_for_player(opponent)
+        king = board.get_king(player)
+        if Coord(king.i,king.j) in threatened_moves:
+            return True
         return False
         
 
@@ -190,7 +215,14 @@ class Game(object):
         if player.in_check:
             print("Player {} in check!".format(player.n))
         return player.in_check
-        
+
+
+    def check_for_two_kings(self, p1, p2):
+        if len(self.board.get_all_pieces_for_player(p1)) == 1 and len(self.board.get_all_pieces_for_player(p2)) == 1:
+            STALEMATE = True
+            print("Stalemate!")
+            sys.exit(0)
+
 
     def play(self):
         game = True
@@ -228,9 +260,10 @@ class Game(object):
         possibles = self.get_all_possible_moves_for_player(player, opponent, self.board)
         total = 0
         for key, val in possibles.items():
-            total += len(val)
-        #print("possible moves for player {}: {}".format(player, total))
-        #pp.pprint(possibles)
+            if val is not None:
+                total += len(val)
+#        print("(random_ turn) possible moves for player {}: {}".format(player, total))
+#        pp.pprint(possibles)
         if total == 0 and not player.in_check:
             STALEMATE = True
             print("Stalemate!")
@@ -246,13 +279,14 @@ class Game(object):
             for coord in val:
                 total += 1
                 if total > r:
-                    spot = key
-                    result = coord
+                    src = key
+                    dest = coord
                     end = True
                     break
             if end:
                 break
-        self.board.movement(Movement(spot.i,spot.j,coord.i,coord.j))
+        print(Movement(src.i,src.j,dest.k,dest.l))
+        self.board.movement(Movement(src.i,src.j,dest.k,dest.l))
         print("Player {} (AI) moves:".format(player.n))
         self.board.print()
 
