@@ -78,15 +78,18 @@ class RandomAiAgent(AiAgent):
 
 def print_state(board):
     print("-" * 16)
+#    print("a b c d e f g h")
     print(board)
     print("")
     
  
 def play_game(board, p1, p2):
     while not board.is_game_over():
+        print("WHITE TURN:")
         p1.turn(board)
         print_state(board)
         if not board.is_game_over():
+            print("BLACK TURN:")
             p2.turn(board)
             print_state(board)
 
