@@ -8,3 +8,4 @@ pylint
 mccabe
 autopep8
 
+python-chess

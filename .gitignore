@@ -7,7 +7,6 @@ __pycache__/
 
 # virtual environments
 venv/
-venv_*
 
 # Tox files
 .tox/*
