@@ -1,0 +1,14 @@
+# Merlin .gitignore
+
+# Python bytecode and serialized files
+__pycache__/
+*.py[cod]
+*.pkl
+
+# virtual environments
+venv/
+venv_*
+
+# Tox files
+.tox/*
+
