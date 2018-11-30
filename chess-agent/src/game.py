@@ -5,8 +5,8 @@ import sys
 
 
 class Agent(object):
-    def __init__(self, n):
-        self.n = n
+    def __init__(self, color):
+        self.color = color #True == white, False = black
 
 
     def do_move(self, move, board):
@@ -81,6 +81,46 @@ class RandomAiAgent(AiAgent):
 SCORE_MAP = {1:1, 2:3, 3:3, 4:5, 5:9, 6:100}
 
 
+class MinMaxAgent(AiAgent):
+    def __init__(self, n, ply):
+        AiAgent.__init__(self, n)
+        self.ply = ply
+
+    def turn(self, board):
+        """
+        """
+        move = recurse_minimax(board, 1)
+        self.do_move(move, board)
+
+
+    def recurse_minimax(self, board, lvl):
+        legal_moves = board.legal_moves
+        maximize = self.color
+
+        if lvl == self.ply:
+            my_moves = []
+            my_scores = []
+            for legal_move in legal_moves:
+                self.do_move(legal_move, board)
+                opp_scores = []
+                opp_moves = []
+                for opp_legal_move in board.legal_moves:
+                    self.do_move(opp_legal_move, board)
+                    opp_score = eval_board(board, SCORE_MAP)
+                    opp_scores.append(opp_score)
+                    opp_moves.append(board.pop())
+                my_moves.append(board.pop())
+                if maximize:
+                    my_scores.append(min(opp_scores))
+                else:
+                    my_scores.append(max(opp_scores))
+            if maximize:
+                return my_moves.index(max(my_scores))
+            else:
+                return my_moves.index(min(my_scores))
+
+
+
 def eval_board(board, score_map):
     white = 0
     black = 0
@@ -138,8 +178,8 @@ def play_game(board, p1, p2, console):
 
 def play_rand_ai_game(console=True):
     board = chess.Board()
-    p1 = RandomAiAgent(1)
-    p2 = RandomAiAgent(2)
+    p1 = RandomAiAgent(True)
+    p2 = MinMaxAgent(False)
     play_game(board, p1, p2, console)
     return board
 
