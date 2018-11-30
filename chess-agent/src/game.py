@@ -83,23 +83,62 @@ def print_state(board):
     print("")
     
  
-def play_game(board, p1, p2):
+def play_game(board, p1, p2, console):
     while not board.is_game_over():
-        print("WHITE TURN:")
+        if console:
+            print("WHITE TURN:")
         p1.turn(board)
-        print_state(board)
-        if not board.is_game_over():
-            print("BLACK TURN:")
-            p2.turn(board)
+        if console:
             print_state(board)
+        if not board.is_game_over():
+            if console:
+                print("BLACK TURN:")
+            p2.turn(board)
+            if console:
+                print_state(board)
+        else:
+            break
+
+    if console:
+        if board.is_seventyfive_moves():
+            print("Game over due to 75 move rule!")
+        elif board.is_insufficient_material():
+            print("Game over due to insufficient material!")
+        elif board.is_stalemate():
+            print("Stalemate!")
+        elif board.is_checkmate():
+            print("Checkmate!")
+        elif board.is_fivefold_repetition():
+            print("Game over due to fivefold repetition!")
+        else:
+            print("Draw?")
 
 
-def play_rand_ai_game():
+def play_rand_ai_game(console=True):
     board = chess.Board()
     p1 = RandomAiAgent(1)
     p2 = RandomAiAgent(2)
-    play_game(board, p1, p2)
+    play_game(board, p1, p2, console)
+    return board
 
 
-play_rand_ai_game()
+#play_rand_ai_game(True)
 
+game_ends = {'75':0, 'insuf':0, 'stalemate':0, 'checkmate':0, '5-rep':0, 'draw':0}
+for i in range(100):
+    result = play_rand_ai_game(False)
+    if result.is_seventyfive_moves():
+       game_ends['75'] = game_ends['75'] + 1
+       game_ends['draw'] = game_ends['draw'] + 1
+    elif result.is_insufficient_material():
+       game_ends['insuf'] = game_ends['insuf'] + 1
+       game_ends['draw'] = game_ends['draw'] + 1
+    elif result.is_stalemate():
+       game_ends['stalemate'] = game_ends['stalemate'] + 1
+       game_ends['draw'] = game_ends['draw'] + 1
+    elif result.is_checkmate():
+       game_ends['checkmate'] = game_ends['checkmate'] + 1
+    elif result.is_fivefold_repetition():
+       game_ends['5-rep'] = game_ends['5-rep'] + 1
+       game_ends['draw'] = game_ends['draw'] + 1
+print(game_ends)
