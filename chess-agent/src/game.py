@@ -1,6 +1,7 @@
 
 import chess
 from random import randint
+import sys
 
 
 class Agent(object):
@@ -76,10 +77,28 @@ class RandomAiAgent(AiAgent):
                 self.do_move(legal_move, board)
                 return
 
+
+SCORE_MAP = {1:1, 2:3, 3:3, 4:5, 5:9, 6:100}
+
+
+def eval_board(board, score_map):
+    white = 0
+    black = 0
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece is not None:
+            if piece.color:
+                white += score_map[piece.piece_type]
+            else:
+                black += score_map[piece.piece_type]
+    return white - black
+
+
 def print_state(board):
     print("-" * 16)
 #    print("a b c d e f g h")
     print(board)
+    print("board score: {}".format(eval_board(board, SCORE_MAP)))
     print("")
     
  
@@ -114,6 +133,9 @@ def play_game(board, p1, p2, console):
             print("Draw?")
 
 
+
+
+
 def play_rand_ai_game(console=True):
     board = chess.Board()
     p1 = RandomAiAgent(1)
@@ -122,10 +144,11 @@ def play_rand_ai_game(console=True):
     return board
 
 
-#play_rand_ai_game(True)
+play_rand_ai_game(True)
 
+"""
 game_ends = {'75':0, 'insuf':0, 'stalemate':0, 'checkmate':0, '5-rep':0, 'draw':0}
-for i in range(1000):
+for i in range(100):
     result = play_rand_ai_game(False)
     if result.is_seventyfive_moves():
        game_ends['75'] = game_ends['75'] + 1
@@ -142,3 +165,4 @@ for i in range(1000):
        game_ends['5-rep'] = game_ends['5-rep'] + 1
        game_ends['draw'] = game_ends['draw'] + 1
 print(game_ends)
+"""
