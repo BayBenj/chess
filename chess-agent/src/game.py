@@ -110,15 +110,17 @@ class MinMaxAgent(AiAgent):
                     opp_scores.append(opp_score)
                     opp_moves.append(board.pop())
                 my_moves.append(board.pop())
+                optimize = max
                 if maximize:
-                    my_scores.append(min(opp_scores))
-                else:
-                    my_scores.append(max(opp_scores))
+                    optimize = min
+                my_scores.append(optimize(opp_scores))
+            optimize = min
             if maximize:
-                return my_moves[my_scores.index(max(my_scores))]
-            else:
-                return my_moves[my_scores.index(min(my_scores))]
-
+                optimize = max
+            optimum = optimize(my_scores)
+            opt_inds = [i for i, x in enumerate(my_scores) if x == optimum]
+            opt_moves = [i for i in my_moves[j for j in opt_inds]]
+            return 
 
 
 def eval_board(board, score_map):
@@ -171,9 +173,6 @@ def play_game(board, p1, p2, console):
             print("Game over due to fivefold repetition!")
         else:
             print("Draw?")
-
-
-
 
 
 def play_rand_ai_game(console=True):
