@@ -125,7 +125,7 @@ def play_rand_ai_game(console=True):
 #play_rand_ai_game(True)
 
 game_ends = {'75':0, 'insuf':0, 'stalemate':0, 'checkmate':0, '5-rep':0, 'draw':0}
-for i in range(100):
+for i in range(1000):
     result = play_rand_ai_game(False)
     if result.is_seventyfive_moves():
        game_ends['75'] = game_ends['75'] + 1
