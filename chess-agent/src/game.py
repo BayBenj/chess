@@ -89,7 +89,7 @@ class MinMaxAgent(AiAgent):
     def turn(self, board):
         """
         """
-        move = recurse_minimax(board, 1)
+        move = self.recurse_minimax(board, 1)
         self.do_move(move, board)
 
 
@@ -115,9 +115,9 @@ class MinMaxAgent(AiAgent):
                 else:
                     my_scores.append(max(opp_scores))
             if maximize:
-                return my_moves.index(max(my_scores))
+                return my_moves[my_scores.index(max(my_scores))]
             else:
-                return my_moves.index(min(my_scores))
+                return my_moves[my_scores.index(min(my_scores))]
 
 
 
@@ -179,7 +179,7 @@ def play_game(board, p1, p2, console):
 def play_rand_ai_game(console=True):
     board = chess.Board()
     p1 = RandomAiAgent(True)
-    p2 = MinMaxAgent(False)
+    p2 = MinMaxAgent(False, 1)
     play_game(board, p1, p2, console)
     return board
 
