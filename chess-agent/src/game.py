@@ -4,6 +4,12 @@ from random import randint
 import sys
 
 
+def rand_elem(l):
+    size = len(l)
+    r = randint(0,size-1)
+    return l[r]
+
+
 class Agent(object):
     def __init__(self, color):
         self.color = color #True == white, False = black
@@ -119,8 +125,10 @@ class MinMaxAgent(AiAgent):
                 optimize = max
             optimum = optimize(my_scores)
             opt_inds = [i for i, x in enumerate(my_scores) if x == optimum]
-            opt_moves = [i for i in my_moves[j for j in opt_inds]]
-            return 
+            opt_moves = []
+            for ind in opt_inds:
+                opt_moves.append(my_moves[ind])
+            return rand_elem(opt_moves)
 
 
 def eval_board(board, score_map):
