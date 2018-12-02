@@ -5,9 +5,6 @@ import sys
 from collections import namedtuple
 
 
-ScoreMove = namedtuple("ScoreMove", ["score","move"])
-
-
 def rand_elem(l):
     size = len(l)
     r = randint(0,size-1)
@@ -63,19 +60,14 @@ class HumanAgent(Agent):
             print("Turn passed")
             return
         i = str(i)
-        j = int(input())
-        k = int(input())
-        l = int(input())
-        if board[i][j].owner == player:
-            if Coord(k,l) in board.board[i][j].get_possible_moves():
-                self.board.movement(Movement(i,j,k,l))
-                self.board.print()
-            else:
-                print("Move not allowed!")
-        else:
-            print("You do not own that piece!")
+        j = str(int(input()))
+        k = str(input())
+        l = str(int(input()))
+        move = chess.Move.from_uci(f'{i}{j}{k}{l}')
+        if move in board.legal_moves:
+            self.do_move(move, board)
 
-  
+
 class AiAgent(Agent):
     def __init__(self, n):
         Agent.__init__(self, n)
@@ -118,7 +110,7 @@ class MinMaxAgent(AiAgent):
         """
         """
         #_, move = self.recurse_minimax2(board, 2, self.color)
-        score, move = self.alpha_beta_max(board, float('-inf'), float('inf'), 2)
+        score, move = self.alpha_beta_max(board, float('-inf'), float('inf'), self.ply)
         self.do_move(move, board)
 
 
@@ -166,7 +158,7 @@ class MinMaxAgent(AiAgent):
 
     def alpha_beta_min(self, board, alpha, beta, depth):
         if depth == 0:
-            return -1 * eval_board(board, SCORE_MAP), board.peek()
+            return eval_board(board, SCORE_MAP), board.peek()
         best_moves = []
         for move in board.legal_moves:
             self.do_move(move, board)
@@ -283,8 +275,9 @@ def print_state(board):
     print(board)
     print("board score: {}".format(eval_board(board, SCORE_MAP)))
     print("")
-    
- 
+    board
+
+
 def play_game(board, p1, p2, console):
     turn = 0
     while not board.is_game_over():
@@ -321,32 +314,15 @@ def play_game(board, p1, p2, console):
 
 def play_rand_ai_game(console=True):
     board = chess.Board()
+    board
 #    p1 = RandomAiAgent(True)
-    p1 = MinMaxAgent(True, 1)
-    p2 = MinMaxAgent(False, 1)
+    p1 = MinMaxAgent(True, 3)
+    p2 = MinMaxAgent(False, 3)
     play_game(board, p1, p2, console)
     return board
 
 
 play_rand_ai_game(True)
 
-"""
-game_ends = {'75':0, 'insuf':0, 'stalemate':0, 'checkmate':0, '5-rep':0, 'draw':0}
-for i in range(100):
-    result = play_rand_ai_game(False)
-    if result.is_seventyfive_moves():
-       game_ends['75'] = game_ends['75'] + 1
-       game_ends['draw'] = game_ends['draw'] + 1
-    elif result.is_insufficient_material():
-       game_ends['insuf'] = game_ends['insuf'] + 1
-       game_ends['draw'] = game_ends['draw'] + 1
-    elif result.is_stalemate():
-       game_ends['stalemate'] = game_ends['stalemate'] + 1
-       game_ends['draw'] = game_ends['draw'] + 1
-    elif result.is_checkmate():
-       game_ends['checkmate'] = game_ends['checkmate'] + 1
-    elif result.is_fivefold_repetition():
-       game_ends['5-rep'] = game_ends['5-rep'] + 1
-       game_ends['draw'] = game_ends['draw'] + 1
-print(game_ends)
-"""
+
+
