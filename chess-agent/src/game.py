@@ -14,6 +14,16 @@ def rand_elem(l):
     return l[r]
 
 
+def rand_elem_count(l):
+    size = l.count()
+    r = randint(0,size-1)
+    i = 0
+    for o in l:
+        if i == r:
+            return o
+        i += 1
+
+
 def max_with_tup(num, tup):
     return max(num,tup.score)
 
@@ -137,31 +147,41 @@ class MinMaxAgent(AiAgent):
     def alpha_beta_max(self, board, alpha, beta, depth):
         if depth == 0:
             return eval_board(board, SCORE_MAP), board.peek()
+        best_moves = []
         for move in board.legal_moves:
             self.do_move(move, board)
             score, _ = self.alpha_beta_min(board, alpha, beta, depth - 1)
             board.pop()
             if score >= beta:
-                return beta     #fail hard beta-cutoff
+                return beta, move     #fail hard beta-cutoff
             if score > alpha:
                 alpha = score   #alpha acts like max in MiniMax
-                best_move = move
-        return alpha, best_move
+                best_moves = [move]
+            elif score == alpha:
+                best_moves.append(move)
+        if len(best_moves) == 0:
+            return alpha, rand_elem_count(board.legal_moves)
+        return alpha, rand_elem(best_moves)
 
 
     def alpha_beta_min(self, board, alpha, beta, depth):
         if depth == 0:
             return -1 * eval_board(board, SCORE_MAP), board.peek()
+        best_moves = []
         for move in board.legal_moves:
             self.do_move(move, board)
             score, _ = self.alpha_beta_max(board, alpha, beta, depth - 1)
             board.pop()
             if score <= alpha:
-                return alpha     #fail hard alpha-cutoff
+                return alpha, move     #fail hard alpha-cutoff
             if score < beta:
                 beta = score     #beta acts like max in MiniMax
-                best_move = move
-        return beta, best_move
+                best_move = [move]
+            elif score == beta:
+                best_moves.append(move)
+        if len(best_moves) == 0:
+            return beta, rand_elem_count(board.legal_moves)
+        return beta, rand_elem(best_moves)
 
 
     def recurse_minimax2(self, board, depth, is_maxer, alpha, beta):
