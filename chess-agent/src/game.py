@@ -98,7 +98,7 @@ class RandomAiAgent(AiAgent):
                 return
 
 
-SCORE_MAP = {1:1, 2:3, 3:3, 4:5, 5:9, 6:100}
+SCORE_MAP = {1:100, 2:320, 3:330, 4:500, 5:900, 6:20000}
 
 
 class MinMaxAgent(AiAgent):
