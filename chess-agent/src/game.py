@@ -114,28 +114,6 @@ class MinMaxAgent(AiAgent):
         self.do_move(move, board)
 
 
-    def maxi(depth):
-        if depth == 0:
-            return eval_board(board, SCORE_MAP)
-        max_score = float('-inf')
-        for move in board.legal_moves:
-            score = self.mini(board, depth - 1)
-            if score > max_score:
-                max_score = score
-        return max_score
-
-
-    def mini(self, board, depth):
-        if depth == 0:
-            return -eval_board(board, SCORE_MAP)
-        min_score = float('inf');
-        for move in board.legal_moves:
-            score = self.maxi(board, depth - 1)
-            if score < min_score:
-                min_score = score
-        return min_score
-
-
     def alpha_beta_max(self, board, alpha, beta, depth):
         if depth == 0:
             return eval_board(board, SCORE_MAP), board.peek()
@@ -174,6 +152,28 @@ class MinMaxAgent(AiAgent):
         if len(best_moves) == 0:
             return beta, rand_elem_count(board.legal_moves)
         return beta, rand_elem(best_moves)
+
+
+    def maxi(depth):
+        if depth == 0:
+            return eval_board(board, SCORE_MAP)
+        max_score = float('-inf')
+        for move in board.legal_moves:
+            score = self.mini(board, depth - 1)
+            if score > max_score:
+                max_score = score
+        return max_score
+
+
+    def mini(self, board, depth):
+        if depth == 0:
+            return -eval_board(board, SCORE_MAP)
+        min_score = float('inf');
+        for move in board.legal_moves:
+            score = self.maxi(board, depth - 1)
+            if score < min_score:
+                min_score = score
+        return min_score
 
 
     def recurse_minimax2(self, board, depth, is_maxer, alpha, beta):
