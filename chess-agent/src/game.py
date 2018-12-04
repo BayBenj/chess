@@ -1,19 +1,13 @@
 
 import chess
-from random import randint
+import random
 import sys
 from collections import namedtuple
 
 
-def rand_elem(l):
-    size = len(l)
-    r = randint(0,size-1)
-    return l[r]
-
-
 def rand_elem_count(l):
     size = l.count()
-    r = randint(0,size-1)
+    r = random.randint(0,size-1)
     i = 0
     for o in l:
         if i == r:
@@ -90,12 +84,7 @@ class RandomAiAgent(AiAgent):
         Based on the board state, pick a random legal move.
         """
         legal_moves = board.legal_moves
-        n = legal_moves.count()
-        r = randint(0,n-1)
-        for i, legal_move in enumerate(legal_moves):
-            if i == r:
-                self.do_move(legal_move, board)
-                return
+        self.do_move(random.choice(list(legal_moves)), board)
 
 
 SCORE_MAP = {1:100, 2:320, 3:330, 4:500, 5:900, 6:20000}
@@ -131,7 +120,7 @@ class MinMaxAgent(AiAgent):
                 best_moves.append(move)
         if len(best_moves) == 0:
             return alpha, rand_elem_count(board.legal_moves)
-        return alpha, rand_elem(best_moves)
+        return alpha, random.choice(best_moves)
 
 
     def alpha_beta_min(self, board, alpha, beta, depth):
@@ -151,7 +140,7 @@ class MinMaxAgent(AiAgent):
                 best_moves.append(move)
         if len(best_moves) == 0:
             return beta, rand_elem_count(board.legal_moves)
-        return beta, rand_elem(best_moves)
+        return beta, random.choice(best_moves)
 
 
     def maxi(depth):
@@ -192,7 +181,7 @@ class MinMaxAgent(AiAgent):
                     best_move = move
                     best_score = new_score
                 elif new_score == best_score:
-                    r = randint(0,1)
+                    r = random.randint(0,1)
                     if r == 0:
                         best_move = move
                 return alpha
@@ -202,7 +191,7 @@ class MinMaxAgent(AiAgent):
                     best_move = move
                     best_score = new_score
                 elif new_score == best_score:
-                    r = randint(0,1)
+                    r = random.randint(0,1)
                     if r == 0:
                         best_move = move
                 return beta
@@ -240,7 +229,7 @@ class MinMaxAgent(AiAgent):
             opt_moves = []
             for ind in opt_inds:
                 opt_moves.append(my_moves[ind])
-            return rand_elem(opt_moves)
+            return random.choice(opt_moves)
         else:
             my_moves = []
             my_scores = []
@@ -315,8 +304,8 @@ def play_game(board, p1, p2, console):
 def play_rand_ai_game(console=True):
     board = chess.Board()
     board
-#    p1 = RandomAiAgent(True)
-    p1 = MinMaxAgent(True, 3)
+    p1 = RandomAiAgent(True)
+#    p1 = MinMaxAgent(True, 3)
     p2 = MinMaxAgent(False, 3)
     play_game(board, p1, p2, console)
     return board
