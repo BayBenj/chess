@@ -5,6 +5,10 @@ import sys
 from collections import namedtuple
 
 
+INF = float('inf')
+NEG_INF = float('-inf')
+
+
 def rand_elem_count(l):
     size = l.count()
     r = random.randint(0,size-1)
@@ -99,14 +103,12 @@ class MinMaxAgent(AiAgent):
         """
         """
         #_, move = self.recurse_minimax2(board, 2, self.color)
-        #score, move = self.alpha_beta_max(board, float('-inf'), float('inf'), self.ply)
+        #score, move = self.alpha_beta_max(board, NEG_INF, INF, self.ply)
         mm = self.alpha_beta_max
-        alpha = float('-inf')
-        beta = float('inf')
+        alpha = NEG_INF
+        beta = INF
         if not self.color:
             mm = self.alpha_beta_min
-            alpha = float('inf')
-            beta = float('-inf')
         score, move = mm(board, alpha, beta, self.ply)
         self.do_move(move, board)
 
@@ -115,7 +117,8 @@ class MinMaxAgent(AiAgent):
         if depth == 0:
             return eval_board(board, SCORE_MAP), board.peek()
         best_moves = []
-        for move in board.legal_moves:
+        legal_moves = board.legal_moves
+        for move in legal_moves:
             self.do_move(move, board)
             score, _ = self.alpha_beta_min(board, alpha, beta, depth - 1)
             board.pop()
@@ -126,10 +129,10 @@ class MinMaxAgent(AiAgent):
                 best_moves = [move]
             elif score == alpha:
                 best_moves.append(move)
-        if board.legal_moves.count() == 0:
+        if legal_moves.count() == 0:
             raise ValueError("No legal moves!")
         if len(best_moves) == 0:
-            return alpha, rand_elem_count(board.legal_moves)
+            return alpha, rand_elem_count(legal_moves)
         return alpha, random.choice(best_moves)
 
 
@@ -137,7 +140,8 @@ class MinMaxAgent(AiAgent):
         if depth == 0:
             return eval_board(board, SCORE_MAP), board.peek(), board.peek()
         best_moves = []
-        for move in board.legal_moves:
+        legal_moves = board.legal_moves
+        for move in legal_moves:
             self.do_move(move, board)
             score, _ = self.alpha_beta_max(board, alpha, beta, depth - 1)
             board.pop()
@@ -148,17 +152,17 @@ class MinMaxAgent(AiAgent):
                 best_moves = [move]
             elif score == beta:
                 best_moves.append(move)
-        if board.legal_moves.count() == 0:
+        if legal_moves.count() == 0:
             raise ValueError("No legal moves!")
         if len(best_moves) == 0:
-            return beta, rand_elem_count(board.legal_moves)
+            return beta, rand_elem_count(legal_moves)
         return beta, random.choice(best_moves)
 
 
     def maxi(self, board, depth):
         if depth == 0:
             return eval_board(board, SCORE_MAP), board.peek()
-        max_score = float('-inf')
+        max_score = NEG_INF
         max_moves = []
         for move in board.legal_moves:
             self.do_move(move, board)
@@ -169,13 +173,13 @@ class MinMaxAgent(AiAgent):
                 max_moves = [move]
             elif score == max_score:
                 max_moves.append(move)
-        return max_score, max_move
+        return max_score, random.choice(max_moves)
 
 
     def mini(self, board, depth):
         if depth == 0:
             return -1 * eval_board(board, SCORE_MAP), board.peek()
-        min_score = float('inf');
+        min_score = INF
         min_moves = []
         for move in board.legal_moves:
             self.do_move(move, board)
@@ -186,7 +190,7 @@ class MinMaxAgent(AiAgent):
                 min_moves = [move]
             elif score == min_score:
                 min_moves.append(move)
-        return min_score, min_move
+        return min_score, random.choice(min_move)
 
 
     def recurse_minimax2(self, board, depth, is_maxer, alpha, beta):
@@ -273,9 +277,9 @@ def eval_board(board, score_map):
     black = 0
     if board.is_checkmate():
         if board.turn:
-            return float('-inf')
+            return NEG_INF
         else:
-            return float('inf')
+            return INF
     elif board.is_seventyfive_moves() or board.is_insufficient_material() or  board.is_stalemate() or board.is_fivefold_repetition():
             return 0
         
@@ -286,8 +290,6 @@ def eval_board(board, score_map):
                 white += score_map[piece.piece_type]
             else:
                 black += score_map[piece.piece_type]
-    if not board.turn:
-        return black - white
     return white - black
 
 
@@ -337,7 +339,7 @@ def play_game(board, p1, p2, console):
 def play_rand_ai_game(console=True):
     board = chess.Board()
     board
-    p1 = MinMaxAgent(True, 2)
+    p1 = MinMaxAgent(True, 4)
     p2 = RandomAiAgent(False)
     play_game(board, p1, p2, console)
     return board
