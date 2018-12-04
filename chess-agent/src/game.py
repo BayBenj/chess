@@ -113,12 +113,7 @@ class MinMaxAgent(AiAgent):
 
     def alpha_beta_max(self, board, alpha, beta, depth):
         if depth == 0:
-            if board.is_seventyfive_moves() or board.is_insufficient_material() or  board.is_stalemate() or board.is_fivefold_repetition():
-                return 0, board.peek()
-            elif board.is_checkmate():
-                return float('-inf'), board.peek()
-            else:
-                return eval_board(board, SCORE_MAP), board.peek()
+            return eval_board(board, SCORE_MAP), board.peek()
         best_moves = []
         for move in board.legal_moves:
             self.do_move(move, board)
@@ -140,12 +135,7 @@ class MinMaxAgent(AiAgent):
 
     def alpha_beta_min(self, board, alpha, beta, depth):
         if depth == 0:
-            if board.is_seventyfive_moves() or board.is_insufficient_material() or  board.is_stalemate() or board.is_fivefold_repetition():
-                return 0, board.peek()
-            elif board.is_checkmate():
-                return float('inf'), board.peek()
-            else:
-                return -1 * eval_board(board, SCORE_MAP), board.peek(), board.peek()
+            return eval_board(board, SCORE_MAP), board.peek(), board.peek()
         best_moves = []
         for move in board.legal_moves:
             self.do_move(move, board)
@@ -281,6 +271,14 @@ class MinMaxAgent(AiAgent):
 def eval_board(board, score_map):
     white = 0
     black = 0
+    if board.is_checkmate():
+        if board.turn:
+            return float('-inf')
+        else:
+            return float('inf')
+    elif board.is_seventyfive_moves() or board.is_insufficient_material() or  board.is_stalemate() or board.is_fivefold_repetition():
+            return 0
+        
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece is not None:
@@ -288,8 +286,9 @@ def eval_board(board, score_map):
                 white += score_map[piece.piece_type]
             else:
                 black += score_map[piece.piece_type]
+    if not board.turn:
+        return black - white
     return white - black
-# @TODO: add scores for board being in checkmate, stalemate
 
 
 def print_state(board):
