@@ -2,7 +2,6 @@
 import chess
 import random
 import sys
-from collections import namedtuple
 
 
 INF = float('inf')
@@ -130,7 +129,10 @@ class MinMaxAgent(AiAgent):
             elif score == alpha:
                 best_moves.append(move)
         if legal_moves.count() == 0:
-            raise ValueError("No legal moves!")
+            score = eval_board(board, SCORE_MAP)
+            return score, board.peek()
+            #print(board)
+            #raise ValueError("No legal moves!")
         if len(best_moves) == 0:
             return alpha, rand_elem_count(legal_moves)
         return alpha, random.choice(best_moves)
@@ -138,7 +140,7 @@ class MinMaxAgent(AiAgent):
 
     def alpha_beta_min(self, board, alpha, beta, depth):
         if depth == 0:
-            return eval_board(board, SCORE_MAP), board.peek(), board.peek()
+            return eval_board(board, SCORE_MAP), board.peek()
         best_moves = []
         legal_moves = board.legal_moves
         for move in legal_moves:
@@ -153,7 +155,10 @@ class MinMaxAgent(AiAgent):
             elif score == beta:
                 best_moves.append(move)
         if legal_moves.count() == 0:
-            raise ValueError("No legal moves!")
+            score = eval_board(board, SCORE_MAP)
+            return score, board.peek()
+            #print(board)
+            #raise ValueError("No legal moves!")
         if len(best_moves) == 0:
             return beta, rand_elem_count(legal_moves)
         return beta, random.choice(best_moves)
@@ -339,13 +344,44 @@ def play_game(board, p1, p2, console):
 def play_rand_ai_game(console=True):
     board = chess.Board()
     board
-    p1 = MinMaxAgent(True, 4)
+    p1 = MinMaxAgent(True, 2)
     p2 = RandomAiAgent(False)
     play_game(board, p1, p2, console)
     return board
 
 
+
+def scholars_mate():
+    board = chess.Board()
+    board.push_san("e4")
+    print(board)
+    print("")
+    board.push_san("e5")
+    print(board)
+    print("")
+    board.push_san("Qh5")
+    print(board)
+    print("")
+    board.push_san("Nc6")
+    print(board)
+    print("")
+    board.push_san("Bc4")
+    print(board)
+    print("")
+    board.push_san("Nf6")
+    print(board)
+    print("")
+    board.push_san("Qxf7")
+    print(board)
+    print("")
+    board.is_checkmate()
+    print(f"turn: {board.turn}")
+    print(f"score: {eval_board(board, SCORE_MAP)}")
+    
+
+
 play_rand_ai_game(True)
+#scholars_mate()
 
 
 
