@@ -99,8 +99,12 @@ class MinMaxAgent(AiAgent):
         """
         """
         #_, move = self.recurse_minimax2(board, 2, self.color)
-        score, move = self.alpha_beta_max(board, float('-inf'), float('inf'), self.ply)
-        self.do_move(move, board)
+        #score, move = self.alpha_beta_max(board, float('-inf'), float('inf'), self.ply)
+        #mm = self.maxi
+        #if not self.color:
+        #    mm = self.mini
+        #score, move = mm(board, self.ply)
+        #self.do_move(move, board)
 
 
     def alpha_beta_max(self, board, alpha, beta, depth):
@@ -112,12 +116,14 @@ class MinMaxAgent(AiAgent):
             score, _ = self.alpha_beta_min(board, alpha, beta, depth - 1)
             board.pop()
             if score >= beta:
-                return beta, move     #fail hard beta-cutoff
+                return beta, future_move       #fail hard beta-cutoff
             if score > alpha:
-                alpha = score   #alpha acts like max in MiniMax
-                best_moves = [move]
+                alpha = score           #alpha acts like max in MiniMax
+                best_moves = [future_move]
             elif score == alpha:
-                best_moves.append(move)
+                best_moves.append(future_move)
+        if board.legal_moves.count() == 0:
+            raise ValueError("No legal moves!")
         if len(best_moves) == 0:
             return alpha, rand_elem_count(board.legal_moves)
         return alpha, random.choice(best_moves)
@@ -125,44 +131,52 @@ class MinMaxAgent(AiAgent):
 
     def alpha_beta_min(self, board, alpha, beta, depth):
         if depth == 0:
-            return eval_board(board, SCORE_MAP), board.peek()
+            return -1 * eval_board(board, SCORE_MAP), board.peek()
         best_moves = []
         for move in board.legal_moves:
             self.do_move(move, board)
-            score, _ = self.alpha_beta_max(board, alpha, beta, depth - 1)
+            score, future_move = self.alpha_beta_max(board, alpha, beta, depth - 1)
             board.pop()
             if score <= alpha:
-                return alpha, move     #fail hard alpha-cutoff
+                return alpha, future_move      #fail hard alpha-cutoff
             if score < beta:
-                beta = score     #beta acts like max in MiniMax
-                best_move = [move]
+                beta = score            #beta acts like max in MiniMax
+                best_move = [future_move]
             elif score == beta:
-                best_moves.append(move)
+                best_moves.append(future_move)
+        if board.legal_moves.count() == 0:
+            raise ValueError("No legal moves!")
         if len(best_moves) == 0:
             return beta, rand_elem_count(board.legal_moves)
         return beta, random.choice(best_moves)
 
 
-    def maxi(depth):
+    def maxi(self, board, depth):
         if depth == 0:
-            return eval_board(board, SCORE_MAP)
+            return eval_board(board, SCORE_MAP), board.peek()
         max_score = float('-inf')
         for move in board.legal_moves:
-            score = self.mini(board, depth - 1)
+            self.do_move(move, board)
+            score, future_move = self.mini(board, depth - 1)
+            board.pop()
             if score > max_score:
                 max_score = score
-        return max_score
+                max_move = future_move
+        return max_score, max_move
 
 
     def mini(self, board, depth):
         if depth == 0:
-            return -eval_board(board, SCORE_MAP)
+            return -1 * eval_board(board, SCORE_MAP), board.peek()
         min_score = float('inf');
         for move in board.legal_moves:
-            score = self.maxi(board, depth - 1)
+            self.do_move(move, board)
+            score, future_move = self.maxi(board, depth - 1)
+            board.pop()
             if score < min_score:
                 min_score = score
-        return min_score
+                min_move = future_move
+        return min_score, min_move
 
 
     def recurse_minimax2(self, board, depth, is_maxer, alpha, beta):
@@ -244,7 +258,6 @@ class MinMaxAgent(AiAgent):
                     self.recurse_minimax(board, lvl + 1)
 
 
-
 def eval_board(board, score_map):
     white = 0
     black = 0
@@ -304,9 +317,8 @@ def play_game(board, p1, p2, console):
 def play_rand_ai_game(console=True):
     board = chess.Board()
     board
-    p1 = RandomAiAgent(True)
-#    p1 = MinMaxAgent(True, 3)
-    p2 = MinMaxAgent(False, 3)
+    p1 = MinMaxAgent(True, 2)
+    p2 = RandomAiAgent(False)
     play_game(board, p1, p2, console)
     return board
 
