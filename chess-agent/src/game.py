@@ -100,28 +100,37 @@ class MinMaxAgent(AiAgent):
         """
         #_, move = self.recurse_minimax2(board, 2, self.color)
         #score, move = self.alpha_beta_max(board, float('-inf'), float('inf'), self.ply)
-        #mm = self.maxi
-        #if not self.color:
-        #    mm = self.mini
-        #score, move = mm(board, self.ply)
-        #self.do_move(move, board)
+        mm = self.alpha_beta_max
+        alpha = float('-inf')
+        beta = float('inf')
+        if not self.color:
+            mm = self.alpha_beta_min
+            alpha = float('inf')
+            beta = float('-inf')
+        score, move = mm(board, alpha, beta, self.ply)
+        self.do_move(move, board)
 
 
     def alpha_beta_max(self, board, alpha, beta, depth):
         if depth == 0:
-            return eval_board(board, SCORE_MAP), board.peek()
+            if board.is_seventyfive_moves() or board.is_insufficient_material() or  board.is_stalemate() or board.is_fivefold_repetition():
+                return 0, board.peek()
+            elif board.is_checkmate():
+                return float('-inf'), board.peek()
+            else:
+                return eval_board(board, SCORE_MAP), board.peek()
         best_moves = []
         for move in board.legal_moves:
             self.do_move(move, board)
             score, _ = self.alpha_beta_min(board, alpha, beta, depth - 1)
             board.pop()
             if score >= beta:
-                return beta, future_move       #fail hard beta-cutoff
+                return beta, move       #fail hard beta-cutoff
             if score > alpha:
                 alpha = score           #alpha acts like max in MiniMax
-                best_moves = [future_move]
+                best_moves = [move]
             elif score == alpha:
-                best_moves.append(future_move)
+                best_moves.append(move)
         if board.legal_moves.count() == 0:
             raise ValueError("No legal moves!")
         if len(best_moves) == 0:
@@ -131,19 +140,24 @@ class MinMaxAgent(AiAgent):
 
     def alpha_beta_min(self, board, alpha, beta, depth):
         if depth == 0:
-            return -1 * eval_board(board, SCORE_MAP), board.peek()
+            if board.is_seventyfive_moves() or board.is_insufficient_material() or  board.is_stalemate() or board.is_fivefold_repetition():
+                return 0, board.peek()
+            elif board.is_checkmate():
+                return float('inf'), board.peek()
+            else:
+                return -1 * eval_board(board, SCORE_MAP), board.peek(), board.peek()
         best_moves = []
         for move in board.legal_moves:
             self.do_move(move, board)
-            score, future_move = self.alpha_beta_max(board, alpha, beta, depth - 1)
+            score, _ = self.alpha_beta_max(board, alpha, beta, depth - 1)
             board.pop()
             if score <= alpha:
-                return alpha, future_move      #fail hard alpha-cutoff
+                return alpha, move      #fail hard alpha-cutoff
             if score < beta:
                 beta = score            #beta acts like max in MiniMax
-                best_move = [future_move]
+                best_moves = [move]
             elif score == beta:
-                best_moves.append(future_move)
+                best_moves.append(move)
         if board.legal_moves.count() == 0:
             raise ValueError("No legal moves!")
         if len(best_moves) == 0:
@@ -155,13 +169,16 @@ class MinMaxAgent(AiAgent):
         if depth == 0:
             return eval_board(board, SCORE_MAP), board.peek()
         max_score = float('-inf')
+        max_moves = []
         for move in board.legal_moves:
             self.do_move(move, board)
-            score, future_move = self.mini(board, depth - 1)
+            score, _ = self.mini(board, depth - 1)
             board.pop()
             if score > max_score:
                 max_score = score
-                max_move = future_move
+                max_moves = [move]
+            elif score == max_score:
+                max_moves.append(move)
         return max_score, max_move
 
 
@@ -169,13 +186,16 @@ class MinMaxAgent(AiAgent):
         if depth == 0:
             return -1 * eval_board(board, SCORE_MAP), board.peek()
         min_score = float('inf');
+        min_moves = []
         for move in board.legal_moves:
             self.do_move(move, board)
-            score, future_move = self.maxi(board, depth - 1)
+            score, _ = self.maxi(board, depth - 1)
             board.pop()
             if score < min_score:
                 min_score = score
-                min_move = future_move
+                min_moves = [move]
+            elif score == min_score:
+                min_moves.append(move)
         return min_score, min_move
 
 
@@ -269,6 +289,7 @@ def eval_board(board, score_map):
             else:
                 black += score_map[piece.piece_type]
     return white - black
+# @TODO: add scores for board being in checkmate, stalemate
 
 
 def print_state(board):
