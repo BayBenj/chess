@@ -4,6 +4,9 @@ import random
 import sys
 
 
+# Add a model for memoization -- it saves all games and can order the legal moves by best first?
+
+
 INF = float('inf')
 NEG_INF = float('-inf')
 
@@ -52,17 +55,14 @@ class HumanAgent(Agent):
         Prompt the user for a move, then return that move.
         """
         print("Player move: ", end="")
-        i = input()
-        if i == "p":
-            print("Turn passed")
-            return
-        i = str(i)
-        j = str(int(input()))
-        k = str(input())
-        l = str(int(input()))
-        move = chess.Move.from_uci(f'{i}{j}{k}{l}')
-        if move in board.legal_moves:
-            self.do_move(move, board)
+        move = None
+        while move not in board.legal_moves:
+            i = str(input())
+            j = str(int(input()))
+            k = str(input())
+            l = str(int(input()))
+            move = chess.Move.from_uci(f'{i}{j}{k}{l}')
+        self.do_move(move, board)
 
 
 class AiAgent(Agent):
@@ -77,7 +77,7 @@ class AiAgent(Agent):
         pass
 
 
-class RandomAiAgent(AiAgent):
+class RandomAgent(AiAgent):
     def __init__(self, n):
         AiAgent.__init__(self, n)
 
@@ -101,15 +101,41 @@ class MinMaxAgent(AiAgent):
     def turn(self, board):
         """
         """
-        #_, move = self.recurse_minimax2(board, 2, self.color)
-        #score, move = self.alpha_beta_max(board, NEG_INF, INF, self.ply)
-        mm = self.alpha_beta_max
-        alpha = NEG_INF
-        beta = INF
-        if not self.color:
-            mm = self.alpha_beta_min
-        score, move = mm(board, alpha, beta, self.ply)
+#        mm = self.alpha_beta_max
+#        alpha = NEG_INF
+#        beta = INF
+#        if not self.color:
+#            mm = self.alpha_beta_min
+#        score, move = mm(board, alpha, beta, self.ply)
+#        self.do_move(move, board)
+
+        score, move = self.negamax(board, self.ply, NEG_INF, INF)
         self.do_move(move, board)
+
+    def negamax(self, board, depth, alpha, beta):
+        if depth == 0 or board.is_game_over():
+            if board.turn:
+                return eval_board(board, SCORE_MAP), board.peek()
+            return -eval_board(board, SCORE_MAP), board.peek()
+
+        legal_moves = list(board.legal_moves)
+        random.shuffle(legal_moves)
+        value = NEG_INF
+        best_moves = []
+        for move in legal_moves:
+            self.do_move(move, board)
+            new_value = max(value, -self.negamax(board, depth - 1, -beta, -alpha)[0])
+            board.pop()
+            if new_value > value:
+                best_moves = [move]
+            else:
+                best_moves.append(move) #TODO: is this right?
+            value = new_value
+            alpha = max(alpha, value)
+            if alpha >= beta:
+                break #(* cut-off *)
+        return value, random.choice(best_moves)
+
 
 
     def alpha_beta_max(self, board, alpha, beta, depth):
@@ -131,8 +157,6 @@ class MinMaxAgent(AiAgent):
         if legal_moves.count() == 0:
             score = eval_board(board, SCORE_MAP)
             return score, board.peek()
-            #print(board)
-            #raise ValueError("No legal moves!")
         if len(best_moves) == 0:
             return alpha, rand_elem_count(legal_moves)
         return alpha, random.choice(best_moves)
@@ -157,8 +181,6 @@ class MinMaxAgent(AiAgent):
         if legal_moves.count() == 0:
             score = eval_board(board, SCORE_MAP)
             return score, board.peek()
-            #print(board)
-            #raise ValueError("No legal moves!")
         if len(best_moves) == 0:
             return beta, rand_elem_count(legal_moves)
         return beta, random.choice(best_moves)
@@ -345,7 +367,7 @@ def play_rand_ai_game(console=True):
     board = chess.Board()
     board
     p1 = MinMaxAgent(True, 2)
-    p2 = RandomAiAgent(False)
+    p2 = MinMaxAgent(False, 2)
     play_game(board, p1, p2, console)
     return board
 
