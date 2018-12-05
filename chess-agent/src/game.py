@@ -6,6 +6,7 @@ import sys
 
 # Add a model for memoization -- it saves all games and can order the legal moves by best first?
 
+# Add constraint that disallows pawn promotion to bishops or rooks.
 
 INF = float('inf')
 NEG_INF = float('-inf')
