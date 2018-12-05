@@ -258,14 +258,14 @@ def play_game(board, p1, p2, console):
             print("TURN {}: O PLAYER".format(turn))
         p1.turn(board)
         if console:
-            print_state(board)
+            print(board)
         if not board.is_game_over():
             turn += 1
             if console:
                 print("TURN {}: X PLAYER".format(turn))
             p2.turn(board)
             if console:
-                print_state(board)
+                print(board)
         else:
             break
 
