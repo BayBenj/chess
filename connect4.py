@@ -14,16 +14,12 @@ INF = float('inf')
 NEG_INF = float('-inf')
 
 
-Coord = namedtuple("Coord", ["i","j"])
-
-
 class Agent(object):
     def __init__(self, color):
         self.color = color #True == white, False = black
 
 
     def do_move(self, move, board):
-        # Check for move validity if human
         board.push(move)
 
     def turn(self, board):
@@ -46,7 +42,7 @@ class HumanAgent(Agent):
         col = 99
         while move not in board.legal_moves():
             col = str(int(input()))
-        board.do_move(col)
+        self.do_move(col)
 
 
 class AiAgent(Agent):
@@ -88,8 +84,8 @@ class MinMaxAgent(AiAgent):
     def negamax(self, board, depth, alpha, beta):
         if depth == 0 or board.is_game_over():
             if board.turn:
-                return board.eval(), board.peek()
-            return -board.eval(), board.peek()
+                return -board.eval(), board.peek()
+            return board.eval(), board.peek()
 
         legal_moves = list(board.legal_moves())
         random.shuffle(legal_moves)
@@ -122,9 +118,9 @@ class Board():
         s = ""
         for i in range(6):
             for j in range(7):
-                if self.array[i,j] == -1:
+                if self.array[i,j] == 1:
                     s += "X "
-                elif self.array[i,j] == 1:
+                elif self.array[i,j] == -1:
                     s += "O "
                 else:
                     s += ". "
@@ -134,23 +130,19 @@ class Board():
 
     def eval(self):
         if self.is_game_over():
-            if self.is_board_full():
-                return 0
-            if self.turn:
-                return NEG_INF
-            return INF
+            if self.is_4_in_row():
+#                if self.turn:
+#                    return NEG_INF
+                return INF
         return 0
 
 
     def legal_moves(self):
         result = set()
         for j in range(7):
-            for i in range(6):
-                if i == 0 and self.array[i,j] != 0:
-                    break
-                if i == 5 or (self.array[i,j] != 0 and i > 0):
-                    result.add(j)
-                    break
+            row = self.top_empty_row(j)
+            if row is not None:
+                result.add(j)
         return result
                  
 
@@ -172,20 +164,28 @@ class Board():
         if self.top_empty_row(col) is None:
             raise ValueError("Cannot add to a full column!")
         self.move_stack.append(col)
+
         if self.turn:
-            self.array[self.top_empty_row(col),col] = 1
+            color = 1
         else:
-            self.array[self.top_empty_row(col),col] = -1
+            color = -1
+        self.array[self.top_empty_row(col),col] = color
         self.turn = not self.turn
 
 
     def peek(self):
+        if len(self.move_stack) == 0:
+            raise IndexError("Attempted to peek empty stack!")
         return self.move_stack[-1]
 
 
     def pop(self):
-        last = self.move_stack[-1]
+        if len(self.move_stack) == 0:
+            raise IndexError("Attempted to pop empty stack!")
+        last = int(self.move_stack[-1])
         del self.move_stack[-1]
+        self.array[self.top_full_row(last), last] = 0
+        self.turn = not self.turn
         return last
 
 
@@ -200,24 +200,25 @@ class Board():
             return False
         most_recent_col = self.peek()
         most_recent_row = self.top_full_row(most_recent_col)
-        color = self.array[most_recent_row,most_recent_col]
+        color = 1
+        if self.turn:
+            color = -1
         dirs = [(0,1),(1,0),(1,1),(-1,1)]
-        for dir in dirs:
-            sum = 0
-#            print(self)
-            cur_i = int(most_recent_row)
-            cur_j = int(most_recent_col)
-            while cur_i >= 0 and cur_i < 6 and cur_j >=0 and cur_j < 7 and self.array[cur_i,cur_j] == color:
-                sum += 1
-                cur_i += dir[0]
-                cur_j += dir[1]        
-            cur_i = int(most_recent_row)
-            cur_j = int(most_recent_col)
-            while cur_i >= 0 and cur_i < 6 and cur_j >=0 and cur_j < 7 and self.array[cur_i,cur_j] == color:
-                sum += 1
-                cur_i -= dir[0]
-                cur_j -= dir[1]        
-            if sum >= 4:
+        for direction in dirs:
+            contig = 1
+            cur_i = int(most_recent_row) + direction[0]
+            cur_j = int(most_recent_col) + direction[1]
+            while contig < 4 and cur_i >= 0 and cur_i < 6 and cur_j >=0 and cur_j < 7 and self.array[cur_i,cur_j] == color:
+                contig += 1
+                cur_i += direction[0]
+                cur_j += direction[1]        
+            cur_i = int(most_recent_row) - direction[0]
+            cur_j = int(most_recent_col) - direction[1]
+            while contig < 4 and cur_i >= 0 and cur_i < 6 and cur_j >=0 and cur_j < 7 and self.array[cur_i,cur_j] == color:
+                contig += 1
+                cur_i -= direction[0]
+                cur_j -= direction[1]        
+            if contig >= 4:
                 return True 
         return False
 
@@ -255,14 +256,14 @@ def play_game(board, p1, p2, console):
     while not board.is_game_over():
         turn += 1
         if console:
-            print("TURN {}: O PLAYER".format(turn))
+            print("TURN {}: X PLAYER".format(turn))
         p1.turn(board)
         if console:
             print(board)
         if not board.is_game_over():
             turn += 1
             if console:
-                print("TURN {}: X PLAYER".format(turn))
+                print("TURN {}: O PLAYER".format(turn))
             p2.turn(board)
             if console:
                 print(board)
@@ -278,8 +279,8 @@ def play_game(board, p1, p2, console):
 
 def play_rand_ai_game(console=True):
     board = Board()
-    p1 = MinMaxAgent(True, 10)
-    p2 = MinMaxAgent(False, 10)
+    p1 = MinMaxAgent(True, 8)
+    p2 = MinMaxAgent(False, 8)
     play_game(board, p1, p2, console)
     return board
 
