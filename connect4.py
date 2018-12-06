@@ -107,8 +107,12 @@ class MinMaxAgent(AiAgent):
 
 
 class Board():
+    ROWS = 6
+    COLS = 7
+    CONTIG = 4
+    
     def __init__(self):
-        self.array = np.zeros((6,7))
+        self.array = np.zeros((ROWS,COLS))
         self.move_stack = []
 #        self.legal_moves
         self.turn = True
@@ -116,8 +120,8 @@ class Board():
 
     def __str__(self):
         s = ""
-        for i in range(6):
-            for j in range(7):
+        for i in range(ROWS):
+            for j in range(COLS):
                 if self.array[i,j] == 1:
                     s += "X "
                 elif self.array[i,j] == -1:
@@ -139,7 +143,7 @@ class Board():
 
     def legal_moves(self):
         result = set()
-        for j in range(7):
+        for j in range(COLS):
             row = self.top_empty_row(j)
             if row is not None:
                 result.add(j)
@@ -154,7 +158,7 @@ class Board():
 
 
     def top_full_row(self, col):
-        for i in range(6):
+        for i in range(ROWS):
             if self.array[i,col] != 0:
                 return i
         return None
@@ -208,24 +212,24 @@ class Board():
             contig = 1
             cur_i = int(most_recent_row) + direction[0]
             cur_j = int(most_recent_col) + direction[1]
-            while contig < 4 and cur_i >= 0 and cur_i < 6 and cur_j >=0 and cur_j < 7 and self.array[cur_i,cur_j] == color:
+            while contig < CONTIG and cur_i >= 0 and cur_i < ROWS and cur_j >=0 and cur_j < COLS and self.array[cur_i,cur_j] == color:
                 contig += 1
                 cur_i += direction[0]
                 cur_j += direction[1]        
             cur_i = int(most_recent_row) - direction[0]
             cur_j = int(most_recent_col) - direction[1]
-            while contig < 4 and cur_i >= 0 and cur_i < 6 and cur_j >=0 and cur_j < 7 and self.array[cur_i,cur_j] == color:
+            while contig < CONTIG and cur_i >= 0 and cur_i < ROWS and cur_j >=0 and cur_j < COLS and self.array[cur_i,cur_j] == color:
                 contig += 1
                 cur_i -= direction[0]
                 cur_j -= direction[1]        
-            if contig >= 4:
+            if contig >= CONTIG:
                 return True 
         return False
 
 
     def is_board_full(self):
-        for i in range(6):
-            for j in range(7):
+        for i in range(ROWS):
+            for j in range(COLS):
                 if self.array[i][j] == 0:
                     return False
         return True
@@ -280,7 +284,7 @@ def play_game(board, p1, p2, console):
 def play_rand_ai_game(console=True):
     board = Board()
     p1 = MinMaxAgent(True, 8)
-    p2 = MinMaxAgent(False, 8)
+    p2 = RandomAgent(False)
     play_game(board, p1, p2, console)
     return board
 
