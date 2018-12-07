@@ -122,12 +122,10 @@ class NegamaxAgent(AiAgent):
                 break #(* cut-off *)
         return value, random.choice(best_moves)
 
-
-class Board(ABC):
+class Game(ABC):
     def __init__(self):
         self.ROWS = 0
         self.COLS = 0
-        self.CONTIG = 0
         self.array = None
         self.move_stack = []
         self.turn = True
@@ -169,8 +167,24 @@ class Board(ABC):
 
 
     @abstractmethod
+    def eval(self):
+        pass
+
+
+    @abstractmethod
     def is_game_over(self):
         pass
+
+
+    @abstractmethod
+    def is_draw(self):
+        pass
+
+
+class ContigGame(Game):
+    def __init__(self):
+        Game.__init__(self)
+        self.CONTIG = 0
 
 
     @abstractmethod
@@ -207,8 +221,7 @@ class Board(ABC):
         return False
 
 
-class TicTacToeBoard(Board):
-
+class TicTacToeBoard(ContigGame):
     def __init__(self):
         Board.__init__(self)
         self.ROWS = 3
@@ -274,7 +287,7 @@ class TicTacToeBoard(Board):
         return False
 
 
-class Connect4Board(Board):
+class Connect4Board(ContigGame):
     
     def __init__(self):
         Board.__init__(self)
@@ -375,6 +388,24 @@ class Connect4Board(Board):
         return False
 
 
+class ChessBoard(Game):
+    def __init__(self):
+        Game.__init__(self)
+        import chess
+        self.board = chess.Board()
+
+
+    def legal_moves(self):
+        return self.board.legal_moves
+
+
+    def push(self, movee):
+        self.board.push(move)
+
+
+    def pop(self):
+        return self.board.pop()
+    
        
 """
 board = Connect4Board()
@@ -489,5 +520,5 @@ def confusion_matrix(ais,game=TicTacToeBoard,n=1000):
 
 #duel_ais(NegamaxAgent(2), RandomAgent(), 100, Connect4Board)
 
-confusion_matrix([RandomAgent(), NegamaxAgent(1), NegamaxAgent(2), NegamaxAgent(3), NegamaxAgent(4)])
+confusion_matrix([RandomAgent(), NegamaxAgent(1), NegamaxAgent(2), NegamaxAgent(3), NegamaxAgent(4)], Connect4Board, 100)
 
