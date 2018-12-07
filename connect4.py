@@ -16,10 +16,6 @@ NEG_INF = float('-inf')
 
 
 class Agent(object):
-    def __init__(self, color):
-        self.color = color #True == white, False = black
-
-
     def do_move(self, move, board):
         board.push(move)
 
@@ -31,10 +27,6 @@ class Agent(object):
 
 
 class HumanAgent(Agent):
-    def __init__(self, n):
-        Agent.__init__(self, n)
-
-
     def turn(self, board):
         """
         Prompt the user for a move, then return that move.
@@ -47,10 +39,6 @@ class HumanAgent(Agent):
 
 
 class AiAgent(Agent):
-    def __init__(self, n):
-        Agent.__init__(self, n)
-
-
     def turn(self, board):
         """
         Prompt the user for a move, then return that move.
@@ -59,10 +47,6 @@ class AiAgent(Agent):
 
 
 class RandomAgent(AiAgent):
-    def __init__(self, n):
-        AiAgent.__init__(self, n)
-
-
     def turn(self, board):
         """
         Based on the board state, pick a random legal move.
@@ -72,9 +56,9 @@ class RandomAgent(AiAgent):
 
 
 class MinMaxAgent(AiAgent):
-    def __init__(self, n, ply):
-        AiAgent.__init__(self, n)
+    def __init__(self, ply):
         self.ply = ply
+
 
     def turn(self, board):
         """
@@ -82,14 +66,15 @@ class MinMaxAgent(AiAgent):
         score, move = self.negamax(board, self.ply, NEG_INF, INF)
         self.do_move(move, board)
 
+
     def negamax(self, board, depth, alpha, beta):
         if depth == 0 or board.is_game_over():
             if board.turn:
-                return -board.eval(), board.peek()
-            return board.eval(), board.peek()
+                return board.eval(), board.peek()
+            return -board.eval(), board.peek()
 
         legal_moves = list(board.legal_moves())
-        random.shuffle(legal_moves)
+#        random.shuffle(legal_moves)
         value = NEG_INF
         best_moves = []
         for move in legal_moves:
@@ -108,7 +93,6 @@ class MinMaxAgent(AiAgent):
 
 
 class Board(ABC):
-
     def __init__(self):
         self.ROWS = 0
         self.COLS = 0
@@ -382,20 +366,20 @@ print(f"is 4 in a row? {board.is_contig_line()}")
 """
 
 
-def play_game(board, p1, p2, console):
+def play_game(board, first, second, console):
     turn = 0 
     while not board.is_game_over():
         turn += 1
         if console:
             print("TURN {}: X PLAYER".format(turn))
-        p1.turn(board)
+        first.turn(board)
         if console:
             print(board)
         if not board.is_game_over():
             turn += 1
             if console:
                 print("TURN {}: O PLAYER".format(turn))
-            p2.turn(board)
+            second.turn(board)
             if console:
                 print(board)
         else:
@@ -422,7 +406,7 @@ def duel_ais(p1, p2, n=1000, game=TicTacToeBoard):
     p1_wins = 0
     p2_wins = 0
     draws = 0
-    for i in range(n):            
+    for i in range(int(n/2)): 
         board = game()
         play_game(board, p1, p2, False)
         if board.is_draw():
@@ -431,13 +415,22 @@ def duel_ais(p1, p2, n=1000, game=TicTacToeBoard):
             p2_wins += 1
         else:
             p1_wins += 1
+    for i in range(int(n/2)):
+        board = game()
+        play_game(board, p2, p1, False)
+        if board.is_draw():
+            draws += 1
+        elif board.turn:
+            p1_wins += 1
+        else:
+            p2_wins += 1
     print(f"{n} games played:")
     print(f"\tdraws: {draws}")
-    print(f"\tp1 wins: {p1_wins}")
-    print(f"\tp2 wins: {p2_wins}")
+    print(f"\t{type(p1).__name__} P1 wins: {p1_wins}")
+    print(f"\t{type(p2).__name__} P2 wins: {p2_wins}")
 
 #play_rand_ai_game()
 
-duel_ais(RandomAgent(True), RandomAgent(False))
+duel_ais(MinMaxAgent(3), MinMaxAgent(2), 100, Connect4Board)
 
 
