@@ -2,6 +2,7 @@
 import numpy as np
 from collections import namedtuple
 import random
+from abc import ABC, abstractmethod
 
 """
 CONNECT FOUR
@@ -106,13 +107,151 @@ class MinMaxAgent(AiAgent):
         return value, random.choice(best_moves)
 
 
-class Board():
-    ROWS = 6
-    COLS = 7
-    CONTIG = 4
+class Board(ABC):
+
+    def __init__(self):
+        self.ROWS = 0
+        self.COLS = 0
+        self.CONTIG = 0
+        self.array = None
+        self.move_stack = []
+        self.turn = True
+
+
+    def __str__(self):
+        s = ""
+        for i in range(self.ROWS):
+            for j in range(self.COLS):
+                if self.array[i,j] == 1:
+                    s += "X "
+                elif self.array[i,j] == -1:
+                    s += "O "
+                else:
+                    s += ". "
+            s += "\n"
+        return s
+
+
+    @abstractmethod
+    def legal_moves(self):
+        pass
+
+
+    @abstractmethod
+    def push(self):
+        pass
+
+
+    def peek(self):
+        if len(self.move_stack) == 0:
+            raise IndexError("Attempted to peek empty stack!")
+        return self.move_stack[-1]
+
+
+    @abstractmethod
+    def pop(self):
+        pass
+
+
+    @abstractmethod
+    def is_game_over(self):
+        pass
+
+
+    @abstractmethod
+    def is_contig_line(self):
+        pass
+
+
+    def is_game_over(self):
+        if self.is_board_full() or self.is_contig_line():
+            return True
+        return False
+
+
+    def is_board_full(self):
+        for row in range(self.ROWS):
+            for col in range(self.COLS):
+                if self.array[row,col] == 0:
+                    return False
+        return True
+
+
+class TicTacToeBoard(Board):
+
+    def __init__(self):
+        Board.__init__(self)
+        self.ROWS = 3
+        self.COLS = 3
+        self.CONTIG = 3
+        self.array = np.zeros((self.ROWS,self.COLS))
+
+
+    def legal_moves(self):
+        result = set()
+        for row in range(self.ROWS):
+            for col in range(self.COLS):
+                if self.array[row,col] == 0:
+                    result.add((row,col))
+        return result
+
+
+    def push(self, coord):
+        self.move_stack.append(coord)
+        if self.turn:
+            color = 1
+        else:
+            color = -1
+        self.array[coord[0],coord[1]] = color
+        self.turn = not self.turn
+
+
+    def pop(self):
+        if len(self.move_stack) == 0:
+            raise IndexError("Attempted to pop empty stack!")
+        last = int(self.move_stack[-1])
+        del self.move_stack[-1]
+        self.array[last[0], last[1]] = 0
+        self.turn = not self.turn
+        return last
+
+
+    def is_contig_line(self):
+        if len(self.move_stack) == 0:
+            return False
+        most_recent_row = self.peek()[0]
+        most_recent_col = self.peek()[1]
+        color = 1
+        if self.turn:
+            color = -1
+        dirs = [(0,1),(1,0),(1,1),(-1,1)]
+        for direction in dirs:
+            contig = 1
+            cur_i = int(most_recent_row) + direction[0]
+            cur_j = int(most_recent_col) + direction[1]
+            while contig < self.CONTIG and cur_i >= 0 and cur_i < self.ROWS and cur_j >=0 and cur_j < self.COLS and self.array[cur_i,cur_j] == color:
+                contig += 1
+                cur_i += direction[0]
+                cur_j += direction[1]        
+            cur_i = int(most_recent_row) - direction[0]
+            cur_j = int(most_recent_col) - direction[1]
+            while contig < self.CONTIG and cur_i >= 0 and cur_i < self.ROWS and cur_j >=0 and cur_j < self.COLS and self.array[cur_i,cur_j] == color:
+                contig += 1
+                cur_i -= direction[0]
+                cur_j -= direction[1]        
+            if contig >= self.CONTIG:
+                return True 
+        return False
+
+
+class Connect4Board(Board):
     
     def __init__(self):
-        self.array = np.zeros((ROWS,COLS))
+        Board.__init__(self)
+        self.ROWS = 6
+        self.COLS = 7
+        self.CONTIG = 4
+        self.array = np.zeros((self.ROWS,self.COLS))
         self.move_stack = []
 #        self.legal_moves
         self.turn = True
@@ -120,8 +259,8 @@ class Board():
 
     def __str__(self):
         s = ""
-        for i in range(ROWS):
-            for j in range(COLS):
+        for i in range(self.ROWS):
+            for j in range(self.COLS):
                 if self.array[i,j] == 1:
                     s += "X "
                 elif self.array[i,j] == -1:
@@ -134,7 +273,7 @@ class Board():
 
     def eval(self):
         if self.is_game_over():
-            if self.is_4_in_row():
+            if self.is_contig_line():
 #                if self.turn:
 #                    return NEG_INF
                 return INF
@@ -143,7 +282,7 @@ class Board():
 
     def legal_moves(self):
         result = set()
-        for j in range(COLS):
+        for j in range(self.COLS):
             row = self.top_empty_row(j)
             if row is not None:
                 result.add(j)
@@ -158,7 +297,7 @@ class Board():
 
 
     def top_full_row(self, col):
-        for i in range(ROWS):
+        for i in range(self.ROWS):
             if self.array[i,col] != 0:
                 return i
         return None
@@ -177,12 +316,6 @@ class Board():
         self.turn = not self.turn
 
 
-    def peek(self):
-        if len(self.move_stack) == 0:
-            raise IndexError("Attempted to peek empty stack!")
-        return self.move_stack[-1]
-
-
     def pop(self):
         if len(self.move_stack) == 0:
             raise IndexError("Attempted to pop empty stack!")
@@ -193,13 +326,7 @@ class Board():
         return last
 
 
-    def is_game_over(self):
-        if self.is_board_full() or self.is_4_in_row():
-            return True
-        return False
-
-
-    def is_4_in_row(self):
+    def is_contig_line(self):
         if len(self.move_stack) == 0:
             return False
         most_recent_col = self.peek()
@@ -212,33 +339,27 @@ class Board():
             contig = 1
             cur_i = int(most_recent_row) + direction[0]
             cur_j = int(most_recent_col) + direction[1]
-            while contig < CONTIG and cur_i >= 0 and cur_i < ROWS and cur_j >=0 and cur_j < COLS and self.array[cur_i,cur_j] == color:
+            while contig < self.CONTIG and cur_i >= 0 and cur_i < self.ROWS and cur_j >=0 and cur_j < self.COLS and self.array[cur_i,cur_j] == color:
                 contig += 1
                 cur_i += direction[0]
                 cur_j += direction[1]        
             cur_i = int(most_recent_row) - direction[0]
             cur_j = int(most_recent_col) - direction[1]
-            while contig < CONTIG and cur_i >= 0 and cur_i < ROWS and cur_j >=0 and cur_j < COLS and self.array[cur_i,cur_j] == color:
+            while contig < self.CONTIG and cur_i >= 0 and cur_i < self.ROWS and cur_j >=0 and cur_j < self.COLS and self.array[cur_i,cur_j] == color:
                 contig += 1
                 cur_i -= direction[0]
                 cur_j -= direction[1]        
-            if contig >= CONTIG:
+            if contig >= self.CONTIG:
                 return True 
         return False
 
 
-    def is_board_full(self):
-        for i in range(ROWS):
-            for j in range(COLS):
-                if self.array[i][j] == 0:
-                    return False
-        return True
        
 """
-board = Board()
+board = Connect4Board()
 print(board)
 print(f"legal moves={board.legal_moves()}")
-print(f"is 4 in a row? {board.is_4_in_row()}")
+print(f"is 4 in a row? {board.is_contig_line()}")
 board.push(3,1) 
 board.push(3,1) 
 board.push(3,1) 
@@ -251,7 +372,7 @@ board.push(4,1)
 print(board)
 print(f"legal moves={board.legal_moves()}")
 print(f"is board full? {board.is_board_full()}")
-print(f"is 4 in a row? {board.is_4_in_row()}")
+print(f"is 4 in a row? {board.is_contig_line()}")
 """
 
 
@@ -275,15 +396,15 @@ def play_game(board, p1, p2, console):
             break
 
     if console:
-        if board.is_4_in_row():
-            print("Four in a row!")
+        if board.is_contig_line():
+            print("Contiguous line!")
         elif board.is_board_full():
             print("Game over due to full board! Tie.")
 
 
 def play_rand_ai_game(console=True):
-    board = Board()
-    p1 = MinMaxAgent(True, 8)
+    board = TicTacToeBoard()
+    p1 = RandomAgent(True)
     p2 = RandomAgent(False)
     play_game(board, p1, p2, console)
     return board
