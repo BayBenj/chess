@@ -3,6 +3,7 @@ import numpy as np
 from collections import namedtuple
 import random
 from abc import ABC, abstractmethod
+from math import log10
 
 """
 CONNECT FOUR
@@ -456,7 +457,7 @@ def duel_ais(p1, p2, n=1000, game=TicTacToeBoard, console=True):
         print(f"\t{type(p2).__name__} P2 wins: {p2_wins}")
     return p2_wins / (p1_wins + p2_wins)
 
-def confusion_matrix(ais,game=TicTacToeBoard):
+def confusion_matrix(ais,game=TicTacToeBoard,n=100):
     ratios = {}
     pairs = set()
     print("\t\t", end="")
@@ -468,10 +469,11 @@ def confusion_matrix(ais,game=TicTacToeBoard):
         for ai2 in ais:
             pair = (ai1,ai2)
             if pair not in pairs and (ai2,ai1) not in pairs:
-                ratio = duel_ais(ai1,ai2,100,game,False)
+                ratio = duel_ais(ai1,ai2,n,game,False)
                 ratios[pair] = ratio
                 pairs.add(pair)
-                print("{0:0.2f}".format(ratio), end="\t\t")
+                precision = int(log10(n))
+                print(f"{ratio:.{int(log10(n))}}", end="\t\t") 
             else:
                 print("\t\t", end="")
         print("")
