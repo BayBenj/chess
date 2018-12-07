@@ -16,8 +16,21 @@ NEG_INF = float('-inf')
 
 
 class Agent(object):
+    def __str__(self):
+        return type(self).__name__ + "   "
+
+
+    def __eq__(self, other):
+        return type(self) is type(other)
+
+
+    def __hash__(self):
+        return hash(str(self))
+
+
     def do_move(self, move, board):
         board.push(move)
+
 
     def turn(self, board):
         """
@@ -58,6 +71,18 @@ class RandomAgent(AiAgent):
 class NegamaxAgent(AiAgent):
     def __init__(self, ply):
         self.ply = ply
+
+
+    def __str__(self):
+        return type(self).__name__ + f"({self.ply})"
+
+
+    def __hash__(self):
+        return hash(self.ply)
+
+
+    def __eq__(self, other):
+        return type(self) is type(other) and self.ply == other.ply
 
 
     def turn(self, board):
@@ -402,7 +427,7 @@ def play_random_ai_game(game=TicTacToeBoard, console=True):
     return board
 
 
-def duel_ais(p1, p2, n=1000, game=TicTacToeBoard):
+def duel_ais(p1, p2, n=1000, game=TicTacToeBoard, console=True):
     p1_wins = 0
     p2_wins = 0
     draws = 0
@@ -424,13 +449,38 @@ def duel_ais(p1, p2, n=1000, game=TicTacToeBoard):
             p1_wins += 1
         else:
             p2_wins += 1
-    print(f"{n} games played:")
-    print(f"\tdraws: {draws}")
-    print(f"\t{type(p1).__name__} P1 wins: {p1_wins}")
-    print(f"\t{type(p2).__name__} P2 wins: {p2_wins}")
+    if console:
+        print(f"{n} games played:")
+        print(f"\tdraws: {draws}")
+        print(f"\t{type(p1).__name__} P1 wins: {p1_wins}")
+        print(f"\t{type(p2).__name__} P2 wins: {p2_wins}")
+    return p2_wins / (p1_wins + p2_wins)
 
-#play_rand_ai_game()
+def confusion_matrix(ais,game=TicTacToeBoard):
+    ratios = {}
+    pairs = set()
+    print("\t\t", end="")
+    for ai in ais:
+        print(f"{ai}", end="\t")
+    print("")
+    for ai1 in ais:
+        print(f"{ai1}", end="\t")
+        for ai2 in ais:
+            pair = (ai1,ai2)
+            if pair not in pairs and (ai2,ai1) not in pairs:
+                ratio = duel_ais(ai1,ai2,100,game,False)
+                ratios[pair] = ratio
+                pairs.add(pair)
+                print("{0:0.2f}".format(ratio), end="\t\t")
+            else:
+                print("\t\t", end="")
+        print("")
+    return ratios
 
-duel_ais(NegamaxAgent(3), NegamaxAgent(2), 100, Connect4Board)
 
+#play_game(Connect4Board(), NegamaxAgent(4), NegamaxAgent(2), True)
+
+#duel_ais(NegamaxAgent(2), RandomAgent(), 100, Connect4Board)
+
+confusion_matrix([RandomAgent(), NegamaxAgent(1), NegamaxAgent(2), NegamaxAgent(3), NegamaxAgent(4)], Connect4Board)
 
