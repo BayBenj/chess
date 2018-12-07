@@ -186,6 +186,12 @@ class Board(ABC):
         return 0
 
 
+    def is_draw(self):
+        if self.is_board_full() and not self.is_contig_line():
+            return True
+        return False
+
+
 class TicTacToeBoard(Board):
 
     def __init__(self):
@@ -402,12 +408,36 @@ def play_game(board, p1, p2, console):
             print("Game over due to full board! Tie.")
 
 
-def play_rand_ai_game(console=True):
-    board = TicTacToeBoard()
-    p1 = MinMaxAgent(True, 12)
+
+
+def play_random_ai_game(game=TicTacToeBoard, console=True):
+    board = game()
+    p1 = RandomAgent(True)
     p2 = RandomAgent(False)
     play_game(board, p1, p2, console)
     return board
 
-play_rand_ai_game()
+
+def duel_ais(p1, p2, n=1000, game=TicTacToeBoard):
+    p1_wins = 0
+    p2_wins = 0
+    draws = 0
+    for i in range(n):            
+        board = game()
+        play_game(board, p1, p2, False)
+        if board.is_draw():
+            draws += 1
+        elif board.turn:
+            p2_wins += 1
+        else:
+            p1_wins += 1
+    print(f"{n} games played:")
+    print(f"\tdraws: {draws}")
+    print(f"\tp1 wins: {p1_wins}")
+    print(f"\tp2 wins: {p2_wins}")
+
+#play_rand_ai_game()
+
+duel_ais(RandomAgent(True), RandomAgent(False))
+
 
