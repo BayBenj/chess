@@ -55,7 +55,7 @@ class RandomAgent(AiAgent):
         self.do_move(random.choice(list(legal_moves)), board)
 
 
-class MinMaxAgent(AiAgent):
+class NegamaxAgent(AiAgent):
     def __init__(self, ply):
         self.ply = ply
 
@@ -431,6 +431,6 @@ def duel_ais(p1, p2, n=1000, game=TicTacToeBoard):
 
 #play_rand_ai_game()
 
-duel_ais(MinMaxAgent(3), MinMaxAgent(2), 100, Connect4Board)
+duel_ais(NegamaxAgent(3), NegamaxAgent(2), 100, Connect4Board)
 
 
