@@ -562,5 +562,5 @@ def confusion_matrix(ais,game=TicTacToeBoard,n=1000):
 
 #duel_ais(NegamaxAgent(2), RandomAgent(), 100, Connect4Board)
 
-confusion_matrix([RandomAgent(), NegamaxAgent(1), NegamaxAgent(2), NegamaxAgent(3)], ChessBoard, 10)
+confusion_matrix([RandomAgent(), NegamaxAgent(1)], ChessBoard, 100)
 
