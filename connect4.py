@@ -177,6 +177,15 @@ class Board(ABC):
         return True
 
 
+    def eval(self):
+        if self.is_game_over():
+            if self.is_contig_line():
+                if self.turn:
+                    return NEG_INF
+                return INF
+        return 0
+
+
 class TicTacToeBoard(Board):
 
     def __init__(self):
@@ -209,7 +218,7 @@ class TicTacToeBoard(Board):
     def pop(self):
         if len(self.move_stack) == 0:
             raise IndexError("Attempted to pop empty stack!")
-        last = int(self.move_stack[-1])
+        last = self.move_stack[-1] #TODO does this cause issues? (not casting to int, for example?)
         del self.move_stack[-1]
         self.array[last[0], last[1]] = 0
         self.turn = not self.turn
@@ -269,15 +278,6 @@ class Connect4Board(Board):
                     s += ". "
             s += "\n"
         return s
-
-
-    def eval(self):
-        if self.is_game_over():
-            if self.is_contig_line():
-#                if self.turn:
-#                    return NEG_INF
-                return INF
-        return 0
 
 
     def legal_moves(self):
@@ -404,7 +404,7 @@ def play_game(board, p1, p2, console):
 
 def play_rand_ai_game(console=True):
     board = TicTacToeBoard()
-    p1 = RandomAgent(True)
+    p1 = MinMaxAgent(True, 12)
     p2 = RandomAgent(False)
     play_game(board, p1, p2, console)
     return board
