@@ -10,6 +10,11 @@ CONNECT FOUR
 
 Try functools.lru_cache for memoization. It's a decorator.
 
+Make parser for PGN files.
+
+Train model on PGN files to score board state. Use model in evaluation function.
+    1 image (chess board) -> [0 through 1] (regression, one float that predicts chance of white winning by state)
+
 """
 
 INF = float('inf')
@@ -457,7 +462,7 @@ def duel_ais(p1, p2, n=1000, game=TicTacToeBoard, console=True):
         print(f"\t{type(p2).__name__} P2 wins: {p2_wins}")
     return p2_wins / (p1_wins + p2_wins)
 
-def confusion_matrix(ais,game=TicTacToeBoard,n=100):
+def confusion_matrix(ais,game=TicTacToeBoard,n=1000):
     ratios = {}
     pairs = set()
     print("\t\t", end="")
@@ -484,5 +489,5 @@ def confusion_matrix(ais,game=TicTacToeBoard,n=100):
 
 #duel_ais(NegamaxAgent(2), RandomAgent(), 100, Connect4Board)
 
-confusion_matrix([RandomAgent(), NegamaxAgent(1), NegamaxAgent(2), NegamaxAgent(3), NegamaxAgent(4)], Connect4Board)
+confusion_matrix([RandomAgent(), NegamaxAgent(1), NegamaxAgent(2), NegamaxAgent(3), NegamaxAgent(4)])
 
