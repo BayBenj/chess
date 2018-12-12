@@ -534,7 +534,7 @@ def duel_ais(p1, p2, n=1000, game=TicTacToeBoard, console=True):
     return p2_wins / (p1_wins + p2_wins)
 
 
-def confusion_matrix(ais,game=TicTacToeBoard,n=1000):
+def confusion_matrix(ais,game=TicTacToeBoard,n=1000,mirror=False):
     ratios = {}
     pairs = set()
     print("\t\t", end="")
@@ -546,13 +546,16 @@ def confusion_matrix(ais,game=TicTacToeBoard,n=1000):
         for ai2 in ais:
             pair = (ai1,ai2)
             if pair not in pairs and (ai2,ai1) not in pairs:
-                ratio = duel_ais(ai1,ai2,n,game,False)
-                ratios[pair] = ratio
-                pairs.add(pair)
-                precision = int(log10(n))
-                print(f"{ratio:.{int(log10(n))}}", end="\t\t") 
+                if ai1 != ai2 or mirror:
+                    ratio = duel_ais(ai1,ai2,n,game,False)
+                    ratios[pair] = ratio
+                    pairs.add(pair)
+                    precision = int(log10(n))
+                    print(f"{ratio:.{int(log10(n))}}", end="\t\t")
+                else:
+                    print(f"n/a", end="\t\t")
             else:
-                print("\t\t", end="")
+                print("", end="\t\t")
         print("")
     return ratios
 
@@ -562,5 +565,5 @@ def confusion_matrix(ais,game=TicTacToeBoard,n=1000):
 
 #duel_ais(NegamaxAgent(2), RandomAgent(), 100, Connect4Board)
 
-confusion_matrix([RandomAgent(), NegamaxAgent(1)], ChessBoard, 100)
+confusion_matrix([RandomAgent(), NegamaxAgent(1)], ChessBoard, 10)
 
