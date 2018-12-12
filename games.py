@@ -4,8 +4,11 @@ from collections import namedtuple
 import random
 from abc import ABC, abstractmethod
 from math import log10
+import logging
+
 import chess
 
+import agents
 """
 CONNECT FOUR
 
@@ -22,106 +25,6 @@ INF = float('inf')
 NEG_INF = float('-inf')
 
 
-class Agent(object):
-    def __str__(self):
-        return type(self).__name__ + "   "
-
-
-    def __eq__(self, other):
-        return type(self) is type(other)
-
-
-    def __hash__(self):
-        return hash(str(self))
-
-
-    def do_move(self, move, board):
-        board.push(move)
-
-
-    def turn(self, board):
-        """
-        Given the current board, decide a move to make.
-        """
-        pass
-
-
-class HumanAgent(Agent):
-    def turn(self, board):
-        """
-        Prompt the user for a move, then return that move.
-        """
-        print("Player move: ", end="")
-        col = 99
-        while move not in board.legal_moves():
-            col = str(int(input()))
-        self.do_move(col)
-
-
-class AiAgent(Agent):
-    def turn(self, board):
-        """
-        Prompt the user for a move, then return that move.
-        """
-        pass
-
-
-class RandomAgent(AiAgent):
-    def turn(self, board):
-        """
-        Based on the board state, pick a random legal move.
-        """
-        legal_moves = board.legal_moves()
-        self.do_move(random.choice(list(legal_moves)), board)
-
-
-class NegamaxAgent(AiAgent):
-    def __init__(self, ply):
-        self.ply = ply
-
-
-    def __str__(self):
-        return type(self).__name__ + f"({self.ply})"
-
-
-    def __hash__(self):
-        return hash(self.ply)
-
-
-    def __eq__(self, other):
-        return type(self) is type(other) and self.ply == other.ply
-
-
-    def turn(self, board):
-        """
-        """
-        score, move = self.negamax(board, self.ply, NEG_INF, INF)
-        self.do_move(move, board)
-
-
-    def negamax(self, board, depth, alpha, beta):
-        if depth == 0 or board.is_game_over():
-            if board.turn:
-                return board.eval(), board.peek()
-            return -board.eval(), board.peek()
-
-        legal_moves = list(board.legal_moves())
-#        random.shuffle(legal_moves)
-        value = NEG_INF
-        best_moves = []
-        for move in legal_moves:
-            self.do_move(move, board)
-            new_value = max(value, -self.negamax(board, depth - 1, -beta, -alpha)[0])
-            board.pop()
-            if new_value > value:
-                best_moves = [move]
-            else:
-                best_moves.append(move) #TODO: is this right?
-            value = new_value
-            alpha = max(alpha, value)
-            if alpha >= beta:
-                break #(* cut-off *)
-        return value, random.choice(best_moves)
 
 class Game(ABC):
     def __init__(self):
@@ -474,96 +377,4 @@ class ChessBoard(Game):
     def is_draw(self):
         return self.board.is_seventyfive_moves() or self.board.is_insufficient_material() or self.board.is_stalemate() or self.board.is_fivefold_repetition()
 
-
-"""
-board = Connect4Board()
-print(board)
-print(f"legal moves={board.legal_moves()}")
-print(f"is 4 in a row? {board.is_contig_line()}")
-board.push(3,1) 
-board.push(3,1) 
-board.push(3,1) 
-board.push(3,-1) 
-board.push(3,1) 
-board.push(3,1) 
-board.push(2,1) 
-board.push(1,1) 
-board.push(4,1) 
-print(board)
-print(f"legal moves={board.legal_moves()}")
-print(f"is board full? {board.is_board_full()}")
-print(f"is 4 in a row? {board.is_contig_line()}")
-"""
-
-
-def play_random_ai_game(game=TicTacToeBoard, console=True):
-    board = game()
-    p1 = RandomAgent(True)
-    p2 = RandomAgent(False)
-    play(board, p1, p2, console)
-    return board
-
-
-def duel_ais(p1, p2, n=1000, game=TicTacToeBoard, console=True):
-    p1_wins = 0
-    p2_wins = 0
-    draws = 0
-    for i in range(int(n/2)): 
-        board = game()
-        board.play(p1, p2, False)
-        if board.is_draw():
-            draws += 1
-        elif board.turn:
-            p2_wins += 1
-        else:
-            p1_wins += 1
-    for i in range(int(n/2)):
-        board = game()
-        board.play(p2, p1, False)
-        if board.is_draw():
-            draws += 1
-        elif board.turn:
-            p1_wins += 1
-        else:
-            p2_wins += 1
-    if console:
-        print(f"{n} games played:")
-        print(f"\tdraws: {draws}")
-        print(f"\t{type(p1).__name__} P1 wins: {p1_wins}")
-        print(f"\t{type(p2).__name__} P2 wins: {p2_wins}")
-    return p2_wins / (p1_wins + p2_wins)
-
-
-def confusion_matrix(ais,game=TicTacToeBoard,n=1000,mirror=False):
-    ratios = {}
-    pairs = set()
-    print("\t\t", end="")
-    for ai in ais:
-        print(f"{ai}", end="\t")
-    print("")
-    for ai1 in ais:
-        print(f"{ai1}", end="\t")
-        for ai2 in ais:
-            pair = (ai1,ai2)
-            if pair not in pairs and (ai2,ai1) not in pairs:
-                if ai1 != ai2 or mirror:
-                    ratio = duel_ais(ai1,ai2,n,game,False)
-                    ratios[pair] = ratio
-                    pairs.add(pair)
-                    precision = int(log10(n))
-                    print(f"{ratio:.{int(log10(n))}}", end="\t\t")
-                else:
-                    print(f"n/a", end="\t\t")
-            else:
-                print("", end="\t\t")
-        print("")
-    return ratios
-
-
-#board = ChessBoard()
-#board.play(NegamaxAgent(1), RandomAgent(), True)
-
-#duel_ais(NegamaxAgent(2), RandomAgent(), 100, Connect4Board)
-
-confusion_matrix([RandomAgent(), NegamaxAgent(1)], ChessBoard, 10)
 
