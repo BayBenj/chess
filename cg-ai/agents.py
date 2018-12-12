@@ -8,6 +8,10 @@ import logging
 
 import chess
 
+"""
+@TODO add determinism / probabalism to agent makeup.
+"""
+
 
 INF = float('inf')
 NEG_INF = float('-inf')
