@@ -1,7 +1,7 @@
 VENV?=venv
 PIP?=$(VENV)/bin/pip3
 PYTH?=$(VENV)/bin/python3
-PROJ?=chess-agent/
+PROJ?=cg-ai/
 MAX_COMPLEXITY?=5
 
 
@@ -36,8 +36,8 @@ pull:
 
 # remove python bytecode files
 clean-py:
-	find $(MRLN) -name "*.py[cod]" -exec rm -f {} \;
-	find $(MRLN) -name "__pycache__" -type d -exec rm -f {} \;
+	find $(PROJ) -name "*.py[cod]" -exec rm -f {} \;
+	find $(PROJ) -name "__pycache__" -type d -exec rm -f {} \;
 
 
 # clean out unwanted files

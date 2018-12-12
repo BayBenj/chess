@@ -7,12 +7,12 @@ def readme():
     with open('README.md') as f:
         return f.read()
 
-setup(name='tasks',
+setup(name='combinatorial-game-ai',
       version=version,
-      description='Different agents for playing chess.',
+      description='Different agents for playing combinatorial games.',
       long_description=readme(),
       classifiers=[
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
       ],  
       keywords='machine deep reinforcement learning chess ai agent',
       url='https://github.com/BayBenj/chess',
@@ -30,9 +30,6 @@ setup(name='tasks',
       ],  
       test_suite='nose.collector',
       tests_require=['nose', 'nose-cover3'],
-      entry_points={
-          'console_scripts': ['merlin=merlin.main:main'],
-      },  
       include_package_data=True,
       zip_safe=False)
 

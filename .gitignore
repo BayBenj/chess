@@ -11,3 +11,9 @@ venv/
 # Tox files
 .tox/*
 
+# Mac file
+.DS_Store
+
+# misc
+misc/
+
