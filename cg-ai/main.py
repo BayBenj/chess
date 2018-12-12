@@ -1,3 +1,5 @@
+import time
+
 from games import *
 from agents import *
 
@@ -14,6 +16,7 @@ def duel_ais(p1, p2, n=1000, game=TicTacToeBoard, console=True):
     p1_wins = 0
     p2_wins = 0
     draws = 0
+    start = time.time()
     for i in range(int(n/2)): 
         board = game()
         board.play(p1, p2, False)
@@ -32,8 +35,12 @@ def duel_ais(p1, p2, n=1000, game=TicTacToeBoard, console=True):
             p1_wins += 1
         else:
             p2_wins += 1
+    stop = time.time()
+    total_time = stop - start
+    avg_time = total_time / float(n)
     if console:
-        print(f"{n} games played:")
+        print(f"{n} games played in {total_time:.{6}} seconds:")
+        print(f"\tavg game time: {avg_time:.{4}} seconds")
         print(f"\tdraws: {draws}")
         print(f"\t{type(p1).__name__} P1 wins: {p1_wins}")
         print(f"\t{type(p2).__name__} P2 wins: {p2_wins}")
@@ -70,7 +77,8 @@ if __name__ == "__main__":
     #board = ChessBoard()
     #board.play(NegamaxAgent(1), RandomAgent(), True)
 
-    #duel_ais(NegamaxAgent(2), RandomAgent(), 100, Connect4Board)
+    #duel_ais(NegamaxAgent(3), NegamaxAgent(3), 4, ChessBoard)
+    duel_ais(RandomAgent(), RandomAgent(), 20, ChessBoard)
 
-    confusion_matrix([RandomAgent(), NegamaxAgent(1)], ChessBoard, 10)
+    #confusion_matrix([RandomAgent(), NegamaxAgent(1)], ChessBoard, 10)
 

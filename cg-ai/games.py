@@ -378,3 +378,52 @@ class ChessBoard(Game):
         return self.board.is_seventyfive_moves() or self.board.is_insufficient_material() or self.board.is_stalemate() or self.board.is_fivefold_repetition()
 
 
+    def attacker_priority_sort(self):
+        moves = list(self.legal_moves())
+        result = []
+        for move in moves:
+            prescore = self.eval()
+            self.push(move)
+            postscore = self.eval()
+            self.pop()
+            diff = postscore - prescore
+            if diff == 0:
+                result.append(move)
+            else:
+                result.insert(0, move)
+        return result
+
+    
+    def mvv_lva_sort(self):
+        pass        
+        # do this with https://python-chess.readthedocs.io/en/latest/core.html
+
+        # for most val to least val enemy piece I am attacking:
+            # identify most valuable victim
+        # for least val to most val friendly piece attacking that victim:
+            # find least valuable piece. That's the chosen one to be sorted.
+        
+
+    def killer_heuristic_sort(self):
+        pass
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

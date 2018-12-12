@@ -100,7 +100,8 @@ class NegamaxAgent(AiAgent):
                 return board.eval(), board.peek()
             return -board.eval(), board.peek()
 
-        legal_moves = list(board.legal_moves())
+#        legal_moves = list(board.legal_moves())
+        legal_moves = board.attacker_priority_sort()
 #        random.shuffle(legal_moves)
         value = NEG_INF
         best_moves = []
