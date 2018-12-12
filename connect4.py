@@ -4,6 +4,7 @@ from collections import namedtuple
 import random
 from abc import ABC, abstractmethod
 from math import log10
+import chess
 
 """
 CONNECT FOUR
@@ -122,15 +123,80 @@ class NegamaxAgent(AiAgent):
                 break #(* cut-off *)
         return value, random.choice(best_moves)
 
-
-class Board(ABC):
+class Game(ABC):
     def __init__(self):
+        self.turn = True
+
+    @abstractmethod
+    def legal_moves(self):
+        pass
+
+
+    @abstractmethod
+    def push(self):
+        pass
+
+
+    @abstractmethod
+    def peek(self):
+        pass
+
+
+    @abstractmethod
+    def pop(self):
+        pass
+
+
+    @abstractmethod
+    def eval(self):
+        pass
+
+
+    @abstractmethod
+    def is_game_over(self):
+        pass
+
+
+    @abstractmethod
+    def is_draw(self):
+        pass
+
+
+    def play(self, first, second, console):
+        turn = 0 
+        while not self.is_game_over():
+            turn += 1
+            if console:
+                print("TURN {}: X PLAYER".format(turn))
+            first.turn(self)
+            if console:
+                print(self)
+            if not self.is_game_over():
+                turn += 1
+                if console:
+                    print("TURN {}: O PLAYER".format(turn))
+                second.turn(self)
+                if console:
+                    print(self)
+            else:
+                break
+
+        if console:
+            print("Game over!")
+    #        if board.is_contig_line():
+    #            print("Contiguous line!")
+    #        elif board.is_board_full():
+    #            print("Game over due to full board! Tie.")
+
+
+class ContigGame(Game):
+    def __init__(self):
+        Game.__init__(self)
         self.ROWS = 0
         self.COLS = 0
         self.CONTIG = 0
         self.array = None
         self.move_stack = []
-        self.turn = True
 
 
     def __str__(self):
@@ -148,12 +214,7 @@ class Board(ABC):
 
 
     @abstractmethod
-    def legal_moves(self):
-        pass
-
-
-    @abstractmethod
-    def push(self):
+    def is_contig_line(self):
         pass
 
 
@@ -161,21 +222,6 @@ class Board(ABC):
         if len(self.move_stack) == 0:
             raise IndexError("Attempted to peek empty stack!")
         return self.move_stack[-1]
-
-
-    @abstractmethod
-    def pop(self):
-        pass
-
-
-    @abstractmethod
-    def is_game_over(self):
-        pass
-
-
-    @abstractmethod
-    def is_contig_line(self):
-        pass
 
 
     def is_game_over(self):
@@ -207,8 +253,7 @@ class Board(ABC):
         return False
 
 
-class TicTacToeBoard(Board):
-
+class TicTacToeBoard(ContigGame):
     def __init__(self):
         Board.__init__(self)
         self.ROWS = 3
@@ -274,17 +319,15 @@ class TicTacToeBoard(Board):
         return False
 
 
-class Connect4Board(Board):
-    
+class Connect4Board(ContigGame):
     def __init__(self):
-        Board.__init__(self)
+        ContigGame.__init__(self)
         self.ROWS = 6
         self.COLS = 7
         self.CONTIG = 4
         self.array = np.zeros((self.ROWS,self.COLS))
         self.move_stack = []
 #        self.legal_moves
-        self.turn = True
 
 
     def __str__(self):
@@ -375,7 +418,63 @@ class Connect4Board(Board):
         return False
 
 
+class ChessBoard(Game):
+    def __init__(self):
+        Game.__init__(self)
+        self.board = chess.Board()
+        self.score_map = {1:100, 2:320, 3:330, 4:500, 5:900, 6:20000}
+
+
+    def __str__(self):
+        return str(self.board)
+
+
+    def legal_moves(self):
+        return self.board.legal_moves
+
+
+    def peek(self):
+        return self.board.peek()
+
+
+    def push(self, move):
+        self.turn = not self.turn
+        self.board.push(move)
+
+
+    def pop(self):
+        self.turn = not self.turn
+        return self.board.pop()
+    
        
+    def eval(self):
+        white = 0 
+        black = 0 
+        if self.board.is_checkmate():
+            if self.board.turn:
+                return NEG_INF
+            else:
+                return INF 
+        elif self.is_draw():
+                return 0
+        for square in chess.SQUARES:
+            piece = self.board.piece_at(square)
+            if piece is not None:
+                if piece.color:
+                    white += self.score_map[piece.piece_type]
+                else:
+                    black += self.score_map[piece.piece_type]
+        return white - black
+
+
+    def is_game_over(self):
+        return self.board.is_game_over()
+
+
+    def is_draw(self):
+        return self.board.is_seventyfive_moves() or self.board.is_insufficient_material() or self.board.is_stalemate() or self.board.is_fivefold_repetition()
+
+
 """
 board = Connect4Board()
 print(board)
@@ -397,39 +496,11 @@ print(f"is 4 in a row? {board.is_contig_line()}")
 """
 
 
-def play_game(board, first, second, console):
-    turn = 0 
-    while not board.is_game_over():
-        turn += 1
-        if console:
-            print("TURN {}: X PLAYER".format(turn))
-        first.turn(board)
-        if console:
-            print(board)
-        if not board.is_game_over():
-            turn += 1
-            if console:
-                print("TURN {}: O PLAYER".format(turn))
-            second.turn(board)
-            if console:
-                print(board)
-        else:
-            break
-
-    if console:
-        if board.is_contig_line():
-            print("Contiguous line!")
-        elif board.is_board_full():
-            print("Game over due to full board! Tie.")
-
-
-
-
 def play_random_ai_game(game=TicTacToeBoard, console=True):
     board = game()
     p1 = RandomAgent(True)
     p2 = RandomAgent(False)
-    play_game(board, p1, p2, console)
+    play(board, p1, p2, console)
     return board
 
 
@@ -439,7 +510,7 @@ def duel_ais(p1, p2, n=1000, game=TicTacToeBoard, console=True):
     draws = 0
     for i in range(int(n/2)): 
         board = game()
-        play_game(board, p1, p2, False)
+        board.play(p1, p2, False)
         if board.is_draw():
             draws += 1
         elif board.turn:
@@ -448,7 +519,7 @@ def duel_ais(p1, p2, n=1000, game=TicTacToeBoard, console=True):
             p1_wins += 1
     for i in range(int(n/2)):
         board = game()
-        play_game(board, p2, p1, False)
+        board.play(p2, p1, False)
         if board.is_draw():
             draws += 1
         elif board.turn:
@@ -486,9 +557,10 @@ def confusion_matrix(ais,game=TicTacToeBoard,n=1000):
     return ratios
 
 
-#play_game(Connect4Board(), NegamaxAgent(4), NegamaxAgent(2), True)
+#board = ChessBoard()
+#board.play(NegamaxAgent(1), RandomAgent(), True)
 
 #duel_ais(NegamaxAgent(2), RandomAgent(), 100, Connect4Board)
 
-confusion_matrix([RandomAgent(), NegamaxAgent(1), NegamaxAgent(2), NegamaxAgent(3), NegamaxAgent(4)])
+confusion_matrix([RandomAgent(), NegamaxAgent(1)], ChessBoard, 100)
 
